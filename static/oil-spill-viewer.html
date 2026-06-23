@@ -457,12 +457,12 @@ function renderMap(records) {
   records.forEach(s => {
     const layer = L.geoJSON({type:'Feature', geometry:s.geometry}, {
       style:{
-        color:'#4a6380',
-        weight:1.5,
-        fillColor:'#1a3c8f',
-        fillOpacity:0.35,
-        opacity:0.85
-      }
+      color:'#059669',
+      weight:1.5,
+      fillColor:'#10b981',
+      fillOpacity:0.4,
+      opacity:0.85
+    }
     })
     .bindTooltip(
       `<strong>${s.name}</strong><br>
