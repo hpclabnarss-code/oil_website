@@ -296,20 +296,25 @@ header{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // =====================================================================
+// =====================================================================
 //  CONFIG — point this at your running backend
 // =====================================================================
 const API_BASE = "/api";
 
 // ─────────────────────────────────────────────────────────────
-// MAP INITIALISATION
+// MAP INITIALISATION (FIXED)
 // ─────────────────────────────────────────────────────────────
-const map = L.map('map',{center:[22,47],zoom:4,zoomControl:true});
+const map = L.map('map', { center: [22, 47], zoom: 4, zoomControl: true });
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
-  subdomains: 'abcd',
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
   maxZoom: 19
 }).addTo(map);
+
+// ─────────────────────────────────────────────────────────────
+// CONSTANTS & STATE
+// ─────────────────────────────────────────────────────────────
+// ... (the rest of your code unchanged)
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS & STATE
