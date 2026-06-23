@@ -126,11 +126,11 @@ header{
   padding:5px 16px;z-index:600;display:none;align-items:center;
   gap:10px;font-size:10px;white-space:nowrap;
 }
-.ib-stat{color:#4a6380;}
+.ib-stat{color:#ffffff;}  /* changed to white */
 .ib-stat strong{color:#d8e4f0;}
 .ib-sep{width:1px;height:11px;background:#1b2336;}
 
-/* ── DETAIL CARD (no severity) ── */
+/* ── DETAIL CARD (no status) ── */
 .detail-card{
   position:absolute;top:50px;right:10px;width:256px;
   background:rgba(14,20,32,.97);border:1px solid #1b2336;border-radius:9px;
@@ -151,15 +151,12 @@ header{
 .dc-v{color:#b8c5d3;font-weight:500;text-align:right;}
 .dc-v.mono{font-family:monospace;font-size:9px;color:#3d5068;}
 .dc-v.blue{color:#4d8fd9;font-family:monospace;font-size:10px;}
-.status-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px;vertical-align:middle;}
 .btn-zoom{
   width:100%;margin-top:9px;padding:7px;background:transparent;
   color:#4d8fd9;border:1px solid #1a3c6e;border-radius:5px;
   font-size:11px;font-weight:600;cursor:pointer;
 }
 .btn-zoom:hover{background:#0a1828;}
-
-/* ── LEGEND REMOVED ── */
 
 /* ── EMPTY / LOADING ── */
 .empty{text-align:center;padding:28px 12px;color:#2c3f57;}
@@ -227,7 +224,7 @@ header{
         <div class="date-duo">
           <div>
             <label class="fl">From</label>
-            <input type="date" id="f-from" value="2020-01-01">
+            <input type="date" id="f-from" value="2014-01-01">
           </div>
           <div>
             <label class="fl">To</label>
@@ -285,8 +282,6 @@ header{
 
     <div id="map"></div>
 
-    <!-- LEGEND REMOVED -->
-
   </div>
 </div>
 
@@ -296,13 +291,12 @@ header{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // =====================================================================
-// =====================================================================
 //  CONFIG — point this at your running backend
 // =====================================================================
 const API_BASE = "/api";
 
 // ─────────────────────────────────────────────────────────────
-// MAP INITIALISATION (FIXED)
+// MAP INITIALISATION
 // ─────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [22, 47], zoom: 4, zoomControl: true });
 
@@ -314,16 +308,6 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_M
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS & STATE
 // ─────────────────────────────────────────────────────────────
-// ... (the rest of your code unchanged)
-
-// ─────────────────────────────────────────────────────────────
-// CONSTANTS & STATE
-// ─────────────────────────────────────────────────────────────
-const STATUS_CLR = {
-  active:'#dc2626',contained:'#ea580c',dispersed:'#3b82f6',
-  resolved:'#16a34a',monitoring:'#d97706'
-};
-
 let layers    = {};
 let selId     = null;
 let lastRecords = [];
@@ -381,7 +365,7 @@ async function applyFilters() {
 }
 
 function resetFilters() {
-  document.getElementById('f-from').value   = '2020-01-01';
+  document.getElementById('f-from').value   = '2014-01-01';
   document.getElementById('f-to').value     = '2024-12-31';
   closeDetail();
   applyFilters();
@@ -403,7 +387,7 @@ function renderError(err) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// RENDER RESULTS LIST (no severity tag)
+// RENDER RESULTS LIST
 // ─────────────────────────────────────────────────────────────
 function renderList(records) {
   const totalArea = records.reduce((s,r) => s + (r.area_km2 || 0), 0);
@@ -444,7 +428,7 @@ function renderList(records) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// RENDER MAP LAYERS (no severity colors, uniform style)
+// RENDER MAP LAYERS (green/teal color)
 // ─────────────────────────────────────────────────────────────
 function renderMap(records) {
   Object.values(layers).forEach(l => map.removeLayer(l));
@@ -457,12 +441,12 @@ function renderMap(records) {
   records.forEach(s => {
     const layer = L.geoJSON({type:'Feature', geometry:s.geometry}, {
       style:{
-      color:'#059669',
-      weight:1.5,
-      fillColor:'#10b981',
-      fillOpacity:0.4,
-      opacity:0.85
-    }
+        color:'#059669',
+        weight:1.5,
+        fillColor:'#10b981',
+        fillOpacity:0.4,
+        opacity:0.85
+      }
     })
     .bindTooltip(
       `<strong>${s.name}</strong><br>
@@ -487,7 +471,7 @@ function renderMap(records) {
 function selectSpill(id) {
   if (selId) {
     document.getElementById(`card-${selId}`)?.classList.remove('sel');
-    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.35, weight:1.5});
+    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.4, weight:1.5});
   }
 
   selId = id;
@@ -502,16 +486,13 @@ function selectSpill(id) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DETAIL PANEL (no severity)
+// DETAIL PANEL (status removed)
 // ─────────────────────────────────────────────────────────────
 function showDetail(s) {
   document.getElementById('dc-title').textContent = s.name;
 
-  const sc = STATUS_CLR[(s.status || '').toLowerCase()] || '#64748b';
-
   document.getElementById('dc-body').innerHTML = `
     <div class="dc-row"><span class="dc-l">ID</span>       <span class="dc-v blue">${s.id}</span></div>
-    ${s.status ? `<div class="dc-row"><span class="dc-l">Status</span>   <span class="dc-v"><span class="status-dot" style="background:${sc}"></span>${s.status}</span></div>` : ''}
     ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span>   <span class="dc-v">${s.region}</span></div>` : ''}
     <div class="dc-row"><span class="dc-l">Date</span>     <span class="dc-v">${fmtDate(s.spill_date)}</span></div>
     <div class="dc-row"><span class="dc-l">Area</span>     <span class="dc-v">${fmtArea(s.area_km2)}</span></div>
@@ -533,7 +514,7 @@ function closeDetail() {
   document.getElementById('detail-card').classList.remove('show');
   if (selId) {
     document.getElementById(`card-${selId}`)?.classList.remove('sel');
-    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.35, weight:1.5});
+    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.4, weight:1.5});
     selId = null;
   }
 }
