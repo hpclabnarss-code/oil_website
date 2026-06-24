@@ -10,7 +10,7 @@
 
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#090c12;color:#c8d3df;
+  background:#090c12;color:#ffffff;
   height:100vh;display:flex;flex-direction:column;overflow:hidden;
 }
 
@@ -28,24 +28,25 @@ header{
 .logo img{
   height:30px;width:auto;border-radius:4px;
 }
-.h-title{font-size:14px;font-weight:700;color:#f0f4f8;}
-.h-sub{font-size:10px;color:#3d5068;margin-top:1px;}
+.h-title{font-size:14px;font-weight:700;color:#ffffff;}
+.h-sub{display:none;}
 .h-pills{margin-left:auto;display:flex;gap:8px;align-items:center;}
 .h-pill{
   background:#131c2b;border:1px solid #1b2336;border-radius:100px;
   padding:4px 12px;font-size:11px;display:flex;align-items:center;gap:5px;
 }
-.h-pill-v{color:#e2e8f0;font-weight:700;}
-.h-pill-l{color:#3d5068;}
+.h-pill-v{color:#ffffff;font-weight:700;}
+.h-pill-l{color:#ffffff;}
 .conn-dot{width:6px;height:6px;border-radius:50%;background:#3d5068;}
 .conn-dot.ok{background:#16a34a;}
 .conn-dot.bad{background:#dc2626;}
-.conn-label{font-size:10px;color:#3d5068;}
+.conn-label{font-size:10px;color:#ffffff;}
 .header-team{
-  color:#2c3f57;font-size:9px;letter-spacing:.05em;
+  color:#ffffff;font-size:9px;letter-spacing:.05em;
   display:flex;align-items:center;gap:6px;
 }
 .header-team img{height:24px;width:auto;border-radius:4px;}
+.header-team span{color:#ffffff;}
 
 /* ── BODY LAYOUT ── */
 .body{display:flex;flex:1;overflow:hidden;}
@@ -56,19 +57,19 @@ header{
   border-right:1px solid #1b2336;display:flex;flex-direction:column;overflow:hidden;
 }
 
-/* ── FILTER SECTION (date optional) ── */
+/* ── FILTER SECTION ── */
 .filter-wrap{padding:13px 13px 10px;border-bottom:1px solid #1b2336;flex-shrink:0;}
 .sec-title{
-  font-size:9px;font-weight:700;color:#2c3f57;text-transform:uppercase;
+  font-size:9px;font-weight:700;color:#ffffff;text-transform:uppercase;
   letter-spacing:.1em;margin-bottom:10px;
 }
 .field{margin-bottom:9px;}
-.fl{font-size:10px;color:#4a6380;display:block;margin-bottom:3px;}
+.fl{font-size:10px;color:#ffffff;display:block;margin-bottom:3px;}
 
 .field select,
 .field input[type=date]{
   width:100%;background:#090c12;border:1px solid #1b2336;
-  color:#b8c5d3;border-radius:5px;padding:6px 8px;font-size:11px;outline:none;
+  color:#ffffff;border-radius:5px;padding:6px 8px;font-size:11px;outline:none;
 }
 .field select:focus,.field input:focus{border-color:#2a5aac;}
 
@@ -76,18 +77,19 @@ header{
 
 .action-row{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:10px;}
 .btn-apply{
-  padding:8px;background:#1a3c8f;color:#fff;border:none;
+  padding:8px;background:#1a3c8f;color:#ffffff;border:none;
   border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;
 }
 .btn-apply:hover{background:#2554c7;}
 .btn-apply:disabled{background:#1b2336;color:#3d5068;cursor:default;}
 .btn-reset{
-  padding:8px 11px;background:transparent;color:#3d5068;
+  padding:8px 11px;background:transparent;color:#ffffff;
   border:1px solid #1b2336;border-radius:5px;font-size:11px;cursor:pointer;
 }
-.btn-reset:hover{background:#131c2b;color:#7a9ab8;}
+.btn-reset:hover{background:#131c2b;color:#ffffff;}
 
-.hint{font-size:9.5px;color:#2c3f57;margin-top:8px;line-height:1.5;}
+.hint{font-size:9.5px;color:#ffffff;margin-top:8px;line-height:1.5;}
+.hint strong{color:#ffffff;}
 
 /* ── RESULTS PANEL ── */
 .results-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;}
@@ -96,7 +98,7 @@ header{
   justify-content:space-between;border-bottom:1px solid #1b2336;flex-shrink:0;
 }
 .r-badge{
-  background:#151f30;color:#3d5068;font-size:10px;font-weight:700;
+  background:#151f30;color:#ffffff;font-size:10px;font-weight:700;
   padding:2px 8px;border-radius:10px;
 }
 .results-list{flex:1;overflow-y:auto;padding:7px 7px 14px;}
@@ -113,10 +115,10 @@ header{
 .spill-card:hover{background:#0e1420;border-color:#2a3a50;}
 .spill-card.sel{background:#0b1628;border-color:#2a5aac;}
 
-.c-id{font-size:9px;font-family:'SF Mono','Fira Code',monospace;color:#2a5aac;letter-spacing:.02em;display:block;margin-bottom:2px;}
-.c-name{font-size:12px;font-weight:600;color:#d8e4f0;margin-bottom:4px;line-height:1.3;}
+.c-id{font-size:9px;font-family:'SF Mono','Fira Code',monospace;color:#4d8fd9;letter-spacing:.02em;display:block;margin-bottom:2px;}
+.c-name{font-size:12px;font-weight:600;color:#ffffff;margin-bottom:4px;line-height:1.3;}
 .c-meta{display:flex;gap:9px;flex-wrap:wrap;}
-.c-meta span{font-size:10px;color:#3d5068;}
+.c-meta span{font-size:10px;color:#ffffff;}
 
 /* ── MAP AREA ── */
 .map-area{flex:1;position:relative;}
@@ -130,10 +132,10 @@ header{
   gap:10px;font-size:10px;white-space:nowrap;
 }
 .ib-stat{color:#ffffff;}
-.ib-stat strong{color:#d8e4f0;}
+.ib-stat strong{color:#ffffff;}
 .ib-sep{width:1px;height:11px;background:#1b2336;}
 
-/* ── DETAIL CARD (no status) ── */
+/* ── DETAIL CARD ── */
 .detail-card{
   position:absolute;top:50px;right:10px;width:256px;
   background:rgba(14,20,32,.97);border:1px solid #1b2336;border-radius:9px;
@@ -141,8 +143,8 @@ header{
 }
 .detail-card.show{display:block;}
 .dc-hd{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px;}
-.dc-title{flex:1;font-size:13px;font-weight:700;color:#f0f4f8;line-height:1.35;}
-.dc-close{background:none;border:none;color:#3d5068;cursor:pointer;font-size:18px;padding:0;line-height:1;}
+.dc-title{flex:1;font-size:13px;font-weight:700;color:#ffffff;line-height:1.35;}
+.dc-close{background:none;border:none;color:#ffffff;cursor:pointer;font-size:18px;padding:0;line-height:1;}
 .dc-close:hover{color:#7a9ab8;}
 .dc-sep{height:1px;background:#1b2336;margin-bottom:7px;}
 .dc-row{
@@ -150,9 +152,9 @@ header{
   padding:4px 0;font-size:11px;border-bottom:1px solid #090c12;
 }
 .dc-row:last-child{border-bottom:none;}
-.dc-l{color:#3d5068;flex-shrink:0;margin-right:8px;}
-.dc-v{color:#b8c5d3;font-weight:500;text-align:right;}
-.dc-v.mono{font-family:monospace;font-size:9px;color:#3d5068;}
+.dc-l{color:#ffffff;flex-shrink:0;margin-right:8px;}
+.dc-v{color:#ffffff;font-weight:500;text-align:right;}
+.dc-v.mono{font-family:monospace;font-size:9px;color:#ffffff;}
 .dc-v.blue{color:#4d8fd9;font-family:monospace;font-size:10px;}
 .btn-zoom{
   width:100%;margin-top:9px;padding:7px;background:transparent;
@@ -162,29 +164,44 @@ header{
 .btn-zoom:hover{background:#0a1828;}
 
 /* ── EMPTY / LOADING ── */
-.empty{text-align:center;padding:28px 12px;color:#2c3f57;}
-.empty-icon{font-size:26px;margin-bottom:8px;}
-.empty-msg{font-size:11px;line-height:1.6;}
-.empty-msg.err{color:#b45252;}
+.empty{text-align:center;padding:28px 12px;color:#ffffff;}
+.empty-icon{font-size:26px;margin-bottom:8px;color:#ffffff;}
+.empty-msg{font-size:11px;line-height:1.6;color:#ffffff;}
+.empty-msg.err{color:#dc2626;}
+
+/* ── LEGEND ── */
+.legend{
+  position:absolute;bottom:30px;right:10px;z-index:600;
+  background:rgba(14,20,32,.94);border:1px solid #1b2336;
+  border-radius:6px;padding:10px 12px;font-size:10px;
+}
+.legend-title{font-weight:700;margin-bottom:5px;color:#ffffff;}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:3px;color:#ffffff;}
+.legend-item:last-child{margin-bottom:0;}
+.legend-color{display:inline-block;width:18px;height:3px;border-radius:2px;}
+.legend-color.active{background:#10b981;border:1px solid #059669;}
+.legend-color.historical{background:#059669;border:1px solid #10b981;opacity:0.6;}
+.legend-text{color:#ffffff;}
 
 /* ── LEAFLET OVERRIDES ── */
 .oil-tip{
   background:rgba(14,20,32,.96)!important;border:1px solid #1b2336!important;
-  color:#c8d3df!important;font-size:11px!important;border-radius:5px!important;
+  color:#ffffff!important;font-size:11px!important;border-radius:5px!important;
   padding:5px 9px!important;box-shadow:none!important;
 }
 .oil-tip::before{display:none!important;}
 .leaflet-control-zoom{border:1px solid #1b2336!important;}
 .leaflet-control-zoom-in,.leaflet-control-zoom-out{
-  background:#0e1420!important;color:#4a6380!important;
+  background:#0e1420!important;color:#ffffff!important;
   border-bottom:1px solid #1b2336!important;
 }
 .leaflet-control-zoom-in:hover,.leaflet-control-zoom-out:hover{
-  background:#131c2b!important;color:#d8e4f0!important;
+  background:#131c2b!important;color:#ffffff!important;
 }
 .leaflet-control-attribution{
-  background:rgba(14,20,32,.7)!important;color:#2c3f57!important;font-size:9px!important;
+  background:rgba(14,20,32,.7)!important;color:#ffffff!important;font-size:9px!important;
 }
+.leaflet-control-attribution a{color:#4d8fd9!important;}
 </style>
 </head>
 <body>
@@ -196,7 +213,6 @@ header{
   </div>
   <div>
     <div class="h-title">NARSS Oil Spill Monitoring Portal</div>
-    <div class="h-sub">Shapefile Database Viewer</div>
   </div>
   <div class="h-pills">
     <div class="h-pill"><span class="conn-dot" id="conn-dot"></span><span class="conn-label" id="conn-label">connecting…</span></div>
@@ -220,7 +236,7 @@ header{
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
-    <!-- FILTERS (date optional) -->
+    <!-- FILTERS -->
     <div class="filter-wrap">
       <div class="sec-title">🔍 Filter by Date (optional)</div>
 
@@ -229,11 +245,11 @@ header{
         <div class="date-duo">
           <div>
             <label class="fl">From</label>
-            <input type="date" id="f-from" value="">
+            <input type="date" id="f-from" value="2014-01-01">
           </div>
           <div>
             <label class="fl">To</label>
-            <input type="date" id="f-to" value="">
+            <input type="date" id="f-to" value="2024-12-31">
           </div>
         </div>
       </div>
@@ -271,7 +287,7 @@ header{
       <span class="ib-sep"></span>
       <span class="ib-stat">Total area <strong id="ib-area">0 km²</strong></span>
       <span class="ib-sep"></span>
-      <span class="ib-stat" style="color:#2c3f57">Click a polygon for details</span>
+      <span class="ib-stat">Click a polygon for details</span>
     </div>
 
     <!-- detail card -->
@@ -283,6 +299,19 @@ header{
       <div class="dc-sep"></div>
       <div id="dc-body"></div>
       <button class="btn-zoom" id="dc-zoom">⊕ Zoom to this spill</button>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="legend-title">Oil Spill Areas</div>
+      <div class="legend-item">
+        <span class="legend-color active"></span>
+        <span class="legend-text">Active / Monitored</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color historical"></span>
+        <span class="legend-text">Historical</span>
+      </div>
     </div>
 
     <div id="map"></div>
@@ -339,7 +368,7 @@ function setConn(ok, label) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// FILTER LOGIC (date optional)
+// FILTER LOGIC
 // ─────────────────────────────────────────────────────────────
 async function applyFilters() {
   const from = document.getElementById('f-from').value;
@@ -370,8 +399,8 @@ async function applyFilters() {
 }
 
 function resetFilters() {
-  document.getElementById('f-from').value = '';
-  document.getElementById('f-to').value = '';
+  document.getElementById('f-from').value = '2014-01-01';
+  document.getElementById('f-to').value = '2024-12-31';
   closeDetail();
   applyFilters();
 }
@@ -433,7 +462,7 @@ function renderList(records) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// RENDER MAP LAYERS (green/teal color)
+// RENDER MAP LAYERS
 // ─────────────────────────────────────────────────────────────
 function renderMap(records) {
   Object.values(layers).forEach(l => map.removeLayer(l));
@@ -491,7 +520,7 @@ function selectSpill(id) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DETAIL PANEL (status removed)
+// DETAIL PANEL
 // ─────────────────────────────────────────────────────────────
 function showDetail(s) {
   document.getElementById('dc-title').textContent = s.name;
