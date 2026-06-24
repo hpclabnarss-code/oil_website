@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oil Spill Shapefile Viewer</title>
+<title>NARSS Oil Spill Monitoring Portal</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -21,9 +21,12 @@ header{
   gap:12px;flex-shrink:0;z-index:200;
 }
 .logo{
-  width:30px;height:30px;background:#7c1d1d;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:14px;
+  width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
+}
+.logo img{
+  height:30px;width:auto;border-radius:4px;
 }
 .h-title{font-size:14px;font-weight:700;color:#f0f4f8;}
 .h-sub{font-size:10px;color:#3d5068;margin-top:1px;}
@@ -53,7 +56,7 @@ header{
   border-right:1px solid #1b2336;display:flex;flex-direction:column;overflow:hidden;
 }
 
-/* ── FILTER SECTION (date only) ── */
+/* ── FILTER SECTION (date optional) ── */
 .filter-wrap{padding:13px 13px 10px;border-bottom:1px solid #1b2336;flex-shrink:0;}
 .sec-title{
   font-size:9px;font-weight:700;color:#2c3f57;text-transform:uppercase;
@@ -100,10 +103,10 @@ header{
 .results-list::-webkit-scrollbar{width:3px;}
 .results-list::-webkit-scrollbar-thumb{background:#1b2336;border-radius:2px;}
 
-/* ── SPILL CARD (no severity tag) ── */
+/* ── SPILL CARD ── */
 .spill-card{
   background:#090c12;border:1px solid #1b2336;
-  border-left:3px solid #1b2336;  /* neutral */
+  border-left:3px solid #1b2336;
   border-radius:5px;padding:9px 11px;margin-bottom:5px;cursor:pointer;
   transition:border-color .12s,background .12s;
 }
@@ -126,7 +129,7 @@ header{
   padding:5px 16px;z-index:600;display:none;align-items:center;
   gap:10px;font-size:10px;white-space:nowrap;
 }
-.ib-stat{color:#ffffff;}  /* changed to white */
+.ib-stat{color:#ffffff;}
 .ib-stat strong{color:#d8e4f0;}
 .ib-sep{width:1px;height:11px;background:#1b2336;}
 
@@ -188,9 +191,11 @@ header{
 
 <!-- HEADER -->
 <header>
-  <div class="logo">🛢</div>
+  <div class="logo">
+    <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'">
+  </div>
   <div>
-    <div class="h-title">Oil Spill Monitor</div>
+    <div class="h-title">NARSS Oil Spill Monitoring Portal</div>
     <div class="h-sub">Shapefile Database Viewer</div>
   </div>
   <div class="h-pills">
@@ -215,20 +220,20 @@ header{
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
-    <!-- FILTERS (date only) -->
+    <!-- FILTERS (date optional) -->
     <div class="filter-wrap">
-      <div class="sec-title">🔍 Filter by Date</div>
+      <div class="sec-title">🔍 Filter by Date (optional)</div>
 
       <div class="field">
         <label class="fl">Date Range</label>
         <div class="date-duo">
           <div>
             <label class="fl">From</label>
-            <input type="date" id="f-from" value="2014-01-01">
+            <input type="date" id="f-from" value="">
           </div>
           <div>
             <label class="fl">To</label>
-            <input type="date" id="f-to" value="2024-12-31">
+            <input type="date" id="f-to" value="">
           </div>
         </div>
       </div>
@@ -238,7 +243,7 @@ header{
         <button class="btn-reset" onclick="resetFilters()">Reset</button>
       </div>
 
-      <div class="hint">No location needed — pick a date range and the map auto-zooms to every matching spill in the database.</div>
+      <div class="hint">Leave dates empty to show <strong>all</strong> spills. Pick a range to narrow down.</div>
     </div>
 
     <!-- RESULTS -->
@@ -291,7 +296,7 @@ header{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // =====================================================================
-//  CONFIG — point this at your running backend
+//  CONFIG
 // =====================================================================
 const API_BASE = "/api";
 
@@ -334,7 +339,7 @@ function setConn(ok, label) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// FILTER LOGIC (date only)
+// FILTER LOGIC (date optional)
 // ─────────────────────────────────────────────────────────────
 async function applyFilters() {
   const from = document.getElementById('f-from').value;
@@ -365,8 +370,8 @@ async function applyFilters() {
 }
 
 function resetFilters() {
-  document.getElementById('f-from').value   = '2014-01-01';
-  document.getElementById('f-to').value     = '2024-12-31';
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
   closeDetail();
   applyFilters();
 }
@@ -409,7 +414,7 @@ function renderList(records) {
   if (records.length === 0) {
     list.innerHTML = `<div class="empty">
       <div class="empty-icon">🔍</div>
-      <div class="empty-msg">No shapefiles in the database<br>for that date range.</div>
+      <div class="empty-msg">No shapefiles in the database for that date range.<br>Try adjusting the filters.</div>
     </div>`;
     return;
   }
