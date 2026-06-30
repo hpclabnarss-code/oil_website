@@ -1,518 +1,1044 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oil Spill Admin — Upload Shapefiles</title>
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oil Spill Admin — Upload Shapefiles</title>
+    <style>
+        /* ── reset & base ── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#090c12;color:#c8d3df;min-height:100vh;
-}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #090c12;
+            color: #c8d3df;
+            min-height: 100vh;
+        }
 
-/* ── HEADER ── */
-header{
-  background:#0e1420;border-bottom:1px solid #1b2336;
-  padding:0 22px;height:54px;display:flex;align-items:center;gap:12px;
-}
-.logo{
-  width:30px;height:30px;background:#7c1d1d;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
-}
-.h-title{font-size:14px;font-weight:700;color:#f0f4f8;}
-.h-sub{font-size:10px;color:#3d5068;margin-top:1px;}
-.h-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.conn-dot{width:6px;height:6px;border-radius:50%;background:#3d5068;}
-.conn-dot.ok{background:#16a34a;}
-.conn-dot.bad{background:#dc2626;}
-.conn-label{font-size:10px;color:#3d5068;}
-.btn-logout{
-  background:transparent;border:1px solid #1b2336;color:#7a9ab8;
-  border-radius:5px;padding:6px 13px;font-size:11px;cursor:pointer;
-}
-.btn-logout:hover{background:#131c2b;}
-.header-team{
-  color:#2c3f57;font-size:9px;letter-spacing:.05em;
-  display:flex;align-items:center;gap:6px;
-}
-.header-team img{height:24px;width:auto;border-radius:4px;}
+        /* ── HEADER ── */
+        header {
+            background: #0e1420;
+            border-bottom: 1px solid #1b2336;
+            padding: 0 22px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo {
+            width: 30px;
+            height: 30px;
+            background: #7c1d1d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .h-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f0f4f8;
+        }
+        .h-sub {
+            font-size: 10px;
+            color: #3d5068;
+            margin-top: 1px;
+        }
+        .h-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .conn-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #3d5068;
+        }
+        .conn-dot.ok {
+            background: #16a34a;
+        }
+        .conn-dot.bad {
+            background: #dc2626;
+        }
+        .conn-label {
+            font-size: 10px;
+            color: #3d5068;
+        }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid #1b2336;
+            color: #7a9ab8;
+            border-radius: 5px;
+            padding: 6px 13px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .btn-logout:hover {
+            background: #131c2b;
+        }
+        .header-team {
+            color: #2c3f57;
+            font-size: 9px;
+            letter-spacing: .05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-team img {
+            height: 24px;
+            width: auto;
+            border-radius: 4px;
+        }
 
-/* ── LOGIN SCREEN ── */
-.login-wrap{
-  max-width:360px;margin:90px auto 0;background:#0e1420;
-  border:1px solid #1b2336;border-radius:10px;padding:30px 28px;
-}
-.login-icon{font-size:28px;text-align:center;margin-bottom:6px;}
-.login-title{font-size:15px;font-weight:700;color:#f0f4f8;text-align:center;margin-bottom:3px;}
-.login-sub{font-size:11px;color:#3d5068;text-align:center;margin-bottom:22px;}
-.field{margin-bottom:13px;}
-.fl{font-size:10px;color:#4a6380;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
-input[type=text],input[type=password],input[type=date],select,textarea{
-  width:100%;background:#090c12;border:1px solid #1b2336;
-  color:#d8e4f0;border-radius:6px;padding:9px 11px;font-size:12px;outline:none;
-  font-family:inherit;
-}
-input:focus,select:focus,textarea:focus{border-color:#2a5aac;}
-select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6380'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 11px center;
-  padding-right:26px;-webkit-appearance:none;appearance:none;
-}
-.btn-primary{
-  width:100%;padding:10px;background:#1a3c8f;color:#fff;border:none;
-  border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;
-}
-.btn-primary:hover{background:#2554c7;}
-.btn-primary:disabled{background:#1b2336;color:#3d5068;cursor:default;}
-.err-msg{
-  background:#1f0606;border:1px solid #5b1414;color:#fca5a5;
-  border-radius:5px;padding:8px 11px;font-size:11px;margin-bottom:13px;display:none;
-}
-.err-msg.show{display:block;}
-.hint-small{font-size:10px;color:#2c3f57;margin-top:14px;text-align:center;line-height:1.5;}
+        /* ── LOGIN ── */
+        .login-wrap {
+            max-width: 360px;
+            margin: 90px auto 0;
+            background: #0e1420;
+            border: 1px solid #1b2336;
+            border-radius: 10px;
+            padding: 30px 28px;
+        }
+        .login-icon {
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .login-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f0f4f8;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+        .login-sub {
+            font-size: 11px;
+            color: #3d5068;
+            text-align: center;
+            margin-bottom: 22px;
+        }
+        .field {
+            margin-bottom: 13px;
+        }
+        .fl {
+            font-size: 10px;
+            color: #4a6380;
+            display: block;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        input[type=text],
+        input[type=password],
+        input[type=date],
+        select,
+        textarea {
+            width: 100%;
+            background: #090c12;
+            border: 1px solid #1b2336;
+            color: #d8e4f0;
+            border-radius: 6px;
+            padding: 9px 11px;
+            font-size: 12px;
+            outline: none;
+            font-family: inherit;
+        }
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #2a5aac;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6380'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 11px center;
+            padding-right: 26px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            background: #1a3c8f;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        .btn-primary:hover {
+            background: #2554c7;
+        }
+        .btn-primary:disabled {
+            background: #1b2336;
+            color: #3d5068;
+            cursor: default;
+        }
+        .err-msg {
+            background: #1f0606;
+            border: 1px solid #5b1414;
+            color: #fca5a5;
+            border-radius: 5px;
+            padding: 8px 11px;
+            font-size: 11px;
+            margin-bottom: 13px;
+            display: none;
+        }
+        .err-msg.show {
+            display: block;
+        }
+        .hint-small {
+            font-size: 10px;
+            color: #2c3f57;
+            margin-top: 14px;
+            text-align: center;
+            line-height: 1.5;
+        }
 
-/* ── DASHBOARD ── */
-.dash{display:none;max-width:1100px;margin:0 auto;padding:26px 24px 60px;}
-.dash.show{display:block;}
+        /* ── DASHBOARD ── */
+        .dash {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 26px 24px 60px;
+        }
+        .dash.show {
+            display: block;
+        }
 
-.grid{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start;}
-@media (max-width:880px){.grid{grid-template-columns:1fr;}}
+        .grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 880px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-.panel{background:#0e1420;border:1px solid #1b2336;border-radius:10px;padding:20px;}
-.panel-title{font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:3px;}
-.panel-sub{font-size:10.5px;color:#3d5068;margin-bottom:18px;line-height:1.5;}
+        .panel {
+            background: #0e1420;
+            border: 1px solid #1b2336;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f0f4f8;
+            margin-bottom: 3px;
+        }
+        .panel-sub {
+            font-size: 10.5px;
+            color: #3d5068;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
 
-/* drop zone */
-.dropzone{
-  border:1.5px dashed #1b2336;border-radius:8px;padding:22px 14px;
-  text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
-  margin-bottom:16px;
-}
-.dropzone:hover,.dropzone.drag{border-color:#2a5aac;background:#0a1828;}
-.dropzone .dz-icon{font-size:22px;margin-bottom:6px;}
-.dropzone .dz-text{font-size:11.5px;color:#7a9ab8;}
-.dropzone .dz-sub{font-size:9.5px;color:#2c3f57;margin-top:4px;}
-.dropzone.has-file{border-color:#15803d;background:#031a0f;}
-.dropzone .dz-filename{font-size:11px;color:#86efac;font-family:monospace;word-break:break-all;}
+        /* ── DROPZONE (multi-file) ── */
+        .dropzone {
+            border: 1.5px dashed #1b2336;
+            border-radius: 8px;
+            padding: 16px 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            margin-bottom: 12px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .dropzone:hover,
+        .dropzone.drag {
+            border-color: #2a5aac;
+            background: #0a1828;
+        }
+        .dropzone.has-files {
+            border-color: #15803d;
+            background: #031a0f;
+            padding-bottom: 10px;
+        }
+        .dropzone .dz-icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+        .dropzone .dz-text {
+            font-size: 11.5px;
+            color: #7a9ab8;
+        }
+        .dropzone .dz-sub {
+            font-size: 9.5px;
+            color: #2c3f57;
+            margin-top: 2px;
+        }
 
-.field-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+        /* file list inside dropzone */
+        .file-list {
+            width: 100%;
+            margin-top: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .file-list .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0a0f1a;
+            border-radius: 4px;
+            padding: 4px 8px 4px 12px;
+            margin-bottom: 4px;
+            font-size: 11px;
+            border: 1px solid #151f30;
+        }
+        .file-list .file-item .fname {
+            font-family: monospace;
+            font-size: 10.5px;
+            color: #86efac;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        .file-list .file-item .fstatus {
+            font-size: 9px;
+            color: #3d5068;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        .file-list .file-item .fstatus.ok {
+            color: #86efac;
+        }
+        .file-list .file-item .fstatus.err {
+            color: #fca5a5;
+        }
+        .file-list .file-item .fstatus.uploading {
+            color: #fbbf24;
+        }
+        .file-list .file-item .fremove {
+            background: transparent;
+            border: none;
+            color: #7a9ab8;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+        .file-list .file-item .fremove:hover {
+            color: #fca5a5;
+        }
+        .file-list .file-item .fremove:disabled {
+            opacity: .3;
+            cursor: default;
+        }
 
-.form-msg{
-  border-radius:6px;padding:9px 11px;font-size:11px;margin-top:14px;display:none;line-height:1.5;
-}
-.form-msg.show{display:block;}
-.form-msg.success{background:#031a0f;border:1px solid #15803d;color:#86efac;}
-.form-msg.error{background:#1f0606;border:1px solid #5b1414;color:#fca5a5;}
+        .field-row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
-/* records table (no severity column) */
-.rec-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.r-badge{background:#151f30;color:#3d5068;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;}
-.btn-refresh{background:transparent;border:1px solid #1b2336;color:#7a9ab8;border-radius:5px;padding:5px 11px;font-size:10.5px;cursor:pointer;}
-.btn-refresh:hover{background:#131c2b;}
+        .form-msg {
+            border-radius: 6px;
+            padding: 9px 11px;
+            font-size: 11px;
+            margin-top: 14px;
+            display: none;
+            line-height: 1.5;
+        }
+        .form-msg.show {
+            display: block;
+        }
+        .form-msg.success {
+            background: #031a0f;
+            border: 1px solid #15803d;
+            color: #86efac;
+        }
+        .form-msg.error {
+            background: #1f0606;
+            border: 1px solid #5b1414;
+            color: #fca5a5;
+        }
+        .form-msg.info {
+            background: #0a1828;
+            border: 1px solid #1b3a6a;
+            color: #93b8e8;
+        }
 
-.rec-table{width:100%;border-collapse:collapse;}
-.rec-table th{
-  text-align:left;font-size:9px;color:#2c3f57;text-transform:uppercase;
-  letter-spacing:.07em;padding:0 10px 8px;border-bottom:1px solid #1b2336;font-weight:700;
-}
-.rec-table td{padding:9px 10px;font-size:11.5px;border-bottom:1px solid #11182a;color:#b8c5d3;}
-.rec-table tr:last-child td{border-bottom:none;}
-.rec-table tr:hover td{background:#0a0f1a;}
-.rec-id{font-family:monospace;font-size:9.5px;color:#2a5aac;}
-.row-actions{display:flex;gap:6px;}
-.icon-btn{
-  background:transparent;border:1px solid #1b2336;color:#7a9ab8;
-  border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;
-}
-.icon-btn:hover{background:#131c2b;}
-.icon-btn.danger{color:#e08080;}
-.icon-btn.danger:hover{background:#1f0606;border-color:#5b1414;}
-.empty-row td{text-align:center;padding:30px 10px;color:#2c3f57;font-size:11px;}
-</style>
+        /* ── RECORDS TABLE ── */
+        .rec-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .r-badge {
+            background: #151f30;
+            color: #3d5068;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 10px;
+        }
+        .btn-refresh {
+            background: transparent;
+            border: 1px solid #1b2336;
+            color: #7a9ab8;
+            border-radius: 5px;
+            padding: 5px 11px;
+            font-size: 10.5px;
+            cursor: pointer;
+        }
+        .btn-refresh:hover {
+            background: #131c2b;
+        }
+
+        .rec-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .rec-table th {
+            text-align: left;
+            font-size: 9px;
+            color: #2c3f57;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: 0 10px 8px;
+            border-bottom: 1px solid #1b2336;
+            font-weight: 700;
+        }
+        .rec-table td {
+            padding: 9px 10px;
+            font-size: 11.5px;
+            border-bottom: 1px solid #11182a;
+            color: #b8c5d3;
+        }
+        .rec-table tr:last-child td {
+            border-bottom: none;
+        }
+        .rec-table tr:hover td {
+            background: #0a0f1a;
+        }
+        .rec-id {
+            font-family: monospace;
+            font-size: 9.5px;
+            color: #2a5aac;
+        }
+        .row-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .icon-btn {
+            background: transparent;
+            border: 1px solid #1b2336;
+            color: #7a9ab8;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .icon-btn:hover {
+            background: #131c2b;
+        }
+        .icon-btn.danger {
+            color: #e08080;
+        }
+        .icon-btn.danger:hover {
+            background: #1f0606;
+            border-color: #5b1414;
+        }
+        .empty-row td {
+            text-align: center;
+            padding: 30px 10px;
+            color: #2c3f57;
+            font-size: 11px;
+        }
+
+        /* small batch-progress summary */
+        .batch-summary {
+            font-size: 10px;
+            color: #3d5068;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .batch-summary strong {
+            color: #b8c5d3;
+        }
+
+        /* scrollable file list tweaks */
+        .file-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .file-list::-webkit-scrollbar-track {
+            background: #090c12;
+        }
+        .file-list::-webkit-scrollbar-thumb {
+            background: #1b2336;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo">🛢</div>
-  <div>
-    <div class="h-title">Oil Spill Admin</div>
-    <div class="h-sub">Upload &amp; Manage Shapefiles</div>
-  </div>
-  <div class="h-right">
-    <div class="header-team">
-      <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'">
-      <span>Team: NARSS</span>
-    </div>
-    <span class="conn-dot" id="conn-dot"></span>
-    <span class="conn-label" id="conn-label">checking…</span>
-    <button class="btn-logout" id="btn-logout" style="display:none" onclick="logout()">Log out</button>
-  </div>
-</header>
-
-<!-- LOGIN -->
-<div class="login-wrap" id="login-wrap">
-  <div class="login-icon">🔒</div>
-  <div class="login-title">Admin Login</div>
-  <div class="login-sub">Sign in to upload or manage spill shapefiles</div>
-
-  <div class="err-msg" id="login-err"></div>
-
-  <div class="field">
-    <label class="fl">Username</label>
-    <input type="text" id="login-user" value="admin" autocomplete="username">
-  </div>
-  <div class="field">
-    <label class="fl">Password</label>
-    <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••">
-  </div>
-  <button class="btn-primary" id="btn-login" onclick="login()">Sign In</button>
-
-  <div class="hint-small">Default dev credentials: admin / changeme123<br>(set ADMIN_USERNAME / ADMIN_PASSWORD on the server to change this)</div>
-</div>
-
-<!-- DASHBOARD -->
-<div class="dash" id="dash">
-  <div class="grid">
-
-    <!-- UPLOAD PANEL -->
-    <div class="panel">
-      <div class="panel-title">📤 Upload Shapefile</div>
-      <div class="panel-sub">Zip up your .shp + .shx + .dbf (and .prj if you have one) and upload it here. It'll be parsed, stored, and immediately available in the viewer.</div>
-
-      <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
-        <div class="dz-icon">🗂️</div>
-        <div class="dz-text" id="dz-text">Click to choose a .zip, or drag it here</div>
-        <div class="dz-sub">Must contain .shp + .shx + .dbf</div>
-      </div>
-      <input type="file" id="file-input" accept=".zip" style="display:none">
-
-      <div class="field">
-        <label class="fl">Spill Name (optional – auto‑filled)</label>
-        <input type="text" id="up-name" placeholder="Leave blank to auto‑generate from filename">
-      </div>
-
-      <div class="field">
-        <label class="fl">Spill Date (optional – auto‑extracted from .dbf)</label>
-        <input type="date" id="up-date">
-      </div>
-
-      <!-- Severity and Source removed from form -->
-
-      <div class="field-row2">
-        <div class="field">
-          <label class="fl">Region (optional)</label>
-          <input type="text" id="up-region" placeholder="e.g. Red Sea">
-        </div>
-        <div class="field">
-          <label class="fl">Vessel (optional)</label>
-          <input type="text" id="up-vessel" placeholder="optional">
-        </div>
-      </div>
-
-      <div class="field-row2">
-        <div class="field">
-          <label class="fl">Oil Type (optional)</label>
-          <input type="text" id="up-oiltype" placeholder="optional">
-        </div>
-        <div class="field">
-          <label class="fl">Status</label>
-          <select id="up-status">
-            <option value="Active" selected>Active</option>
-            <option value="Contained">Contained</option>
-            <option value="Dispersed">Dispersed</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Monitoring">Monitoring</option>
-          </select>
-        </div>
-      </div>
-
-      <button class="btn-primary" id="btn-upload" onclick="uploadShapefile()">Upload Shapefile</button>
-      <div class="form-msg" id="upload-msg"></div>
-    </div>
-
-    <!-- RECORDS PANEL (no severity column) -->
-    <div class="panel">
-      <div class="rec-bar">
+    <!-- HEADER -->
+    <header>
+        <div class="logo">🛢</div>
         <div>
-          <div class="panel-title" style="margin-bottom:2px">📂 Stored Shapefiles</div>
-          <span class="r-badge" id="rec-badge">— records</span>
+            <div class="h-title">Oil Spill Admin</div>
+            <div class="h-sub">Upload &amp; Manage Shapefiles</div>
         </div>
-        <button class="btn-refresh" onclick="loadRecords()">↻ Refresh</button>
-      </div>
+        <div class="h-right">
+            <div class="header-team">
+                <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
+                <span>Team: NARSS</span>
+            </div>
+            <span class="conn-dot" id="conn-dot"></span>
+            <span class="conn-label" id="conn-label">checking…</span>
+            <button class="btn-logout" id="btn-logout" style="display:none" onclick="logout()">Log out</button>
+        </div>
+    </header>
 
-      <div style="overflow-x:auto">
-        <table class="rec-table">
-          <thead>
-            <tr>
-              <th>ID</th><th>Name</th><th>Date</th><th>Area</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="rec-tbody">
-            <tr class="empty-row"><td colspan="5">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- LOGIN -->
+    <div class="login-wrap" id="login-wrap">
+        <div class="login-icon">🔒</div>
+        <div class="login-title">Admin Login</div>
+        <div class="login-sub">Sign in to upload or manage spill shapefiles</div>
+
+        <div class="err-msg" id="login-err"></div>
+
+        <div class="field">
+            <label class="fl">Username</label>
+            <input type="text" id="login-user" value="admin" autocomplete="username" />
+        </div>
+        <div class="field">
+            <label class="fl">Password</label>
+            <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button class="btn-primary" id="btn-login" onclick="login()">Sign In</button>
+
+        <div class="hint-small">Default dev credentials: admin / changeme123<br />(set ADMIN_USERNAME / ADMIN_PASSWORD on the server to change this)</div>
     </div>
 
-  </div>
-</div>
+    <!-- DASHBOARD -->
+    <div class="dash" id="dash">
+        <div class="grid">
 
-<script>
-// =====================================================================
-//  CONFIG
-// =====================================================================
-const  API_BASE = "/api";
+            <!-- UPLOAD PANEL (multi-file) -->
+            <div class="panel">
+                <div class="panel-title">📤 Upload Shapefiles</div>
+                <div class="panel-sub">
+                    Select multiple <strong>.zip</strong> files (each containing .shp + .shx + .dbf + optional .prj).
+                    All files share the same metadata below.
+                </div>
 
-let token = sessionStorage.getItem('admin_token') || null;
-let selectedFile = null;
+                <!-- dropzone -->
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+                    <div class="dz-icon">🗂️</div>
+                    <div class="dz-text" id="dz-text">Click to choose .zip files, or drag them here</div>
+                    <div class="dz-sub">Multiple files supported — each must contain .shp + .shx + .dbf</div>
+                    <!-- file list will be injected here -->
+                    <div class="file-list" id="file-list"></div>
+                </div>
+                <input type="file" id="file-input" accept=".zip" multiple style="display:none" />
 
-// ─────────────────────────────────────────────────────────────
-// CONNECTION INDICATOR
-// ─────────────────────────────────────────────────────────────
-async function checkConnection() {
-  try {
-    const res = await fetch(`${API_BASE}/health`);
-    setConn(res.ok, res.ok ? 'connected' : 'offline');
-  } catch (e) {
-    setConn(false, 'offline');
-  }
-}
-function setConn(ok, label) {
-  document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'bad');
-  document.getElementById('conn-label').textContent = label;
-}
+                <!-- metadata (shared across all files) -->
+                <div class="field">
+                    <label class="fl">Spill Name (optional – auto‑filled from filename)</label>
+                    <input type="text" id="up-name" placeholder="Leave blank to auto‑generate from each filename" />
+                </div>
 
-// ─────────────────────────────────────────────────────────────
-// AUTH
-// ─────────────────────────────────────────────────────────────
-async function login() {
-  const username = document.getElementById('login-user').value.trim();
-  const password = document.getElementById('login-pass').value;
-  const errEl = document.getElementById('login-err');
-  const btn = document.getElementById('btn-login');
+                <div class="field">
+                    <label class="fl">Spill Date (optional – auto‑extracted from .dbf)</label>
+                    <input type="date" id="up-date" />
+                </div>
 
-  errEl.classList.remove('show');
-  btn.disabled = true; btn.textContent = 'Signing in…';
+                <div class="field-row2">
+                    <div class="field">
+                        <label class="fl">Region (optional)</label>
+                        <input type="text" id="up-region" placeholder="e.g. Red Sea" />
+                    </div>
+                    <div class="field">
+                        <label class="fl">Vessel (optional)</label>
+                        <input type="text" id="up-vessel" placeholder="optional" />
+                    </div>
+                </div>
 
-  try {
-    const res = await fetch(`${API_BASE}/admin/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || 'Login failed');
-    }
-    const data = await res.json();
-    token = data.token;
-    sessionStorage.setItem('admin_token', token);
-    showDashboard();
-  } catch (err) {
-    errEl.textContent = err.message || 'Could not reach the server.';
-    errEl.classList.add('show');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Sign In';
-  }
-}
+                <div class="field-row2">
+                    <div class="field">
+                        <label class="fl">Oil Type (optional)</label>
+                        <input type="text" id="up-oiltype" placeholder="optional" />
+                    </div>
+                    <div class="field">
+                        <label class="fl">Status</label>
+                        <select id="up-status">
+                            <option value="Active" selected>Active</option>
+                            <option value="Contained">Contained</option>
+                            <option value="Dispersed">Dispersed</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Monitoring">Monitoring</option>
+                        </select>
+                    </div>
+                </div>
 
-function logout() {
-  token = null;
-  sessionStorage.removeItem('admin_token');
-  document.getElementById('dash').classList.remove('show');
-  document.getElementById('login-wrap').style.display = 'block';
-  document.getElementById('btn-logout').style.display = 'none';
-}
+                <button class="btn-primary" id="btn-upload" onclick="uploadAllFiles()">Upload All Files</button>
+                <div class="batch-summary" id="batch-summary">0 files selected</div>
+                <div class="form-msg" id="upload-msg"></div>
+            </div>
 
-function showDashboard() {
-  document.getElementById('login-wrap').style.display = 'none';
-  document.getElementById('dash').classList.add('show');
-  document.getElementById('btn-logout').style.display = 'inline-block';
-  loadRecords();
-}
+            <!-- RECORDS PANEL -->
+            <div class="panel">
+                <div class="rec-bar">
+                    <div>
+                        <div class="panel-title" style="margin-bottom:2px">📂 Stored Shapefiles</div>
+                        <span class="r-badge" id="rec-badge">— records</span>
+                    </div>
+                    <button class="btn-refresh" onclick="loadRecords()">↻ Refresh</button>
+                </div>
 
-// ─────────────────────────────────────────────────────────────
-// FILE PICKER / DROPZONE
-// ─────────────────────────────────────────────────────────────
-const dz = document.getElementById('dropzone');
-const fileInput = document.getElementById('file-input');
+                <div style="overflow-x:auto">
+                    <table class="rec-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Area</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="rec-tbody">
+                            <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-fileInput.addEventListener('change', e => setSelectedFile(e.target.files[0]));
+        </div>
+    </div>
 
-['dragenter','dragover'].forEach(evt => dz.addEventListener(evt, e => {
-  e.preventDefault(); dz.classList.add('drag');
-}));
-['dragleave','drop'].forEach(evt => dz.addEventListener(evt, e => {
-  e.preventDefault(); dz.classList.remove('drag');
-}));
-dz.addEventListener('drop', e => {
-  const f = e.dataTransfer.files[0];
-  if (f) setSelectedFile(f);
-});
+    <script>
+        // =====================================================================
+        //  CONFIG
+        // =====================================================================
+        const API_BASE = "/api";
 
-function setSelectedFile(f) {
-  if (!f) return;
-  if (!f.name.toLowerCase().endsWith('.zip')) {
-    alert('Please choose a .zip file containing the shapefile components.');
-    return;
-  }
-  selectedFile = f;
-  dz.classList.add('has-file');
-  document.getElementById('dz-text').innerHTML = `<span class="dz-filename">✓ ${f.name}</span>`;
-}
+        let token = sessionStorage.getItem('admin_token') || null;
+        let selectedFiles = []; // array of File objects
 
-// ─────────────────────────────────────────────────────────────
-// UPLOAD (no severity, no source)
-// ─────────────────────────────────────────────────────────────
-async function uploadShapefile() {
-  const msg = document.getElementById('upload-msg');
-  msg.className = 'form-msg'; msg.textContent = '';
+        // ─────────────────────────────────────────────────────────────
+        // CONNECTION INDICATOR
+        // ─────────────────────────────────────────────────────────────
+        async function checkConnection() {
+            try {
+                const res = await fetch(`${API_BASE}/health`);
+                setConn(res.ok, res.ok ? 'connected' : 'offline');
+            } catch (e) {
+                setConn(false, 'offline');
+            }
+        }
 
-  if (!selectedFile) {
-    return showUploadMsg('Choose a .zip shapefile first.', 'error');
-  }
+        function setConn(ok, label) {
+            document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'bad');
+            document.getElementById('conn-label').textContent = label;
+        }
 
-  const fd = new FormData();
-  fd.append('file', selectedFile);
+        // ─────────────────────────────────────────────────────────────
+        // AUTH
+        // ─────────────────────────────────────────────────────────────
+        async function login() {
+            const username = document.getElementById('login-user').value.trim();
+            const password = document.getElementById('login-pass').value;
+            const errEl = document.getElementById('login-err');
+            const btn = document.getElementById('btn-login');
 
-  const name = document.getElementById('up-name').value.trim();
-  if (name) fd.append('name', name);
+            errEl.classList.remove('show');
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
 
-  const date = document.getElementById('up-date').value;
-  if (date) fd.append('spill_date', date);
+            try {
+                const res = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.detail || 'Login failed');
+                }
+                const data = await res.json();
+                token = data.token;
+                sessionStorage.setItem('admin_token', token);
+                showDashboard();
+            } catch (err) {
+                errEl.textContent = err.message || 'Could not reach the server.';
+                errEl.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
 
-  // Severity and source are intentionally NOT sent
+        function logout() {
+            token = null;
+            sessionStorage.removeItem('admin_token');
+            document.getElementById('dash').classList.remove('show');
+            document.getElementById('login-wrap').style.display = 'block';
+            document.getElementById('btn-logout').style.display = 'none';
+            selectedFiles = [];
+            renderFileList();
+        }
 
-  const region = document.getElementById('up-region').value.trim();
-  if (region) fd.append('region', region);
+        function showDashboard() {
+            document.getElementById('login-wrap').style.display = 'none';
+            document.getElementById('dash').classList.add('show');
+            document.getElementById('btn-logout').style.display = 'inline-block';
+            loadRecords();
+            renderFileList();
+        }
 
-  const vessel = document.getElementById('up-vessel').value.trim();
-  if (vessel) fd.append('vessel', vessel);
+        // ─────────────────────────────────────────────────────────────
+        // FILE PICKER / DROPZONE (multi-file)
+        // ─────────────────────────────────────────────────────────────
+        const dz = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
 
-  const oil_type = document.getElementById('up-oiltype').value.trim();
-  if (oil_type) fd.append('oil_type', oil_type);
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            // filter .zip
+            const zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
+            if (zips.length !== files.length) {
+                alert('Only .zip files are accepted. Non-zip files were ignored.');
+            }
+            if (zips.length === 0) return;
+            // append to selectedFiles (avoid duplicates by name)
+            const existingNames = new Set(selectedFiles.map(f => f.name));
+            for (const f of zips) {
+                if (!existingNames.has(f.name)) {
+                    selectedFiles.push(f);
+                    existingNames.add(f.name);
+                }
+            }
+            renderFileList();
+            // reset input so same file can be re-selected
+            fileInput.value = '';
+            updateBatchSummary();
+        });
 
-  fd.append('status', document.getElementById('up-status').value);
+        ['dragenter', 'dragover'].forEach(evt =>
+            dz.addEventListener(evt, e => { e.preventDefault();
+                dz.classList.add('drag'); })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            dz.addEventListener(evt, e => { e.preventDefault();
+                dz.classList.remove('drag'); })
+        );
+        dz.addEventListener('drop', function(e) {
+            const files = Array.from(e.dataTransfer.files);
+            const zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
+            if (zips.length === 0) {
+                alert('Please drop .zip files only.');
+                return;
+            }
+            const existingNames = new Set(selectedFiles.map(f => f.name));
+            for (const f of zips) {
+                if (!existingNames.has(f.name)) {
+                    selectedFiles.push(f);
+                    existingNames.add(f.name);
+                }
+            }
+            renderFileList();
+            updateBatchSummary();
+        });
 
-  const btn = document.getElementById('btn-upload');
-  btn.disabled = true; btn.textContent = 'Uploading…';
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFileList();
+            updateBatchSummary();
+        }
 
-  try {
-    const res = await fetch(`${API_BASE}/admin/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: fd
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.detail || `Upload failed (${res.status})`);
+        function renderFileList() {
+            const container = document.getElementById('file-list');
+            const dzEl = document.getElementById('dropzone');
 
-    showUploadMsg(`Uploaded successfully as ${body.id} — area ≈ ${Math.round(body.area_km2)} km². Now visible in the viewer.`, 'success');
-    resetUploadForm();
-    loadRecords();
-  } catch (err) {
-    showUploadMsg(err.message, 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Upload Shapefile';
-  }
-}
+            if (selectedFiles.length === 0) {
+                container.innerHTML = '';
+                dzEl.classList.remove('has-files');
+                document.getElementById('dz-text').textContent = 'Click to choose .zip files, or drag them here';
+                return;
+            }
 
-function showUploadMsg(text, type) {
-  const msg = document.getElementById('upload-msg');
-  msg.textContent = text;
-  msg.className = `form-msg show ${type}`;
-}
+            dzEl.classList.add('has-files');
+            document.getElementById('dz-text').textContent = `${selectedFiles.length} file(s) selected — click to add more`;
 
-function resetUploadForm() {
-  selectedFile = null;
-  fileInput.value = '';
-  dz.classList.remove('has-file');
-  document.getElementById('dz-text').textContent = 'Click to choose a .zip, or drag it here';
-  ['up-name','up-region','up-vessel','up-oiltype'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('up-date').value = '';
-}
+            container.innerHTML = selectedFiles.map((f, i) => `
+            <div class="file-item" data-index="${i}">
+              <span class="fname">${f.name}</span>
+              <span class="fstatus" id="fstatus-${i}">pending</span>
+              <button class="fremove" data-index="${i}" title="Remove" ${uploading ? 'disabled' : ''}>&times;</button>
+            </div>
+          `).join('');
 
-// ─────────────────────────────────────────────────────────────
-// RECORDS TABLE (no severity column)
-// ─────────────────────────────────────────────────────────────
-async function loadRecords() {
-  const tbody = document.getElementById('rec-tbody');
-  tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
+            // wire remove buttons
+            container.querySelectorAll('.fremove').forEach(btn => {
+                const idx = parseInt(btn.dataset.index);
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (this.disabled) return;
+                    removeFile(idx);
+                });
+            });
+        }
 
-  try {
-    const res = await fetch(`${API_BASE}/admin/spills`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.status === 401) { logout(); return; }
-    if (!res.ok) throw new Error('Failed to load records');
-    const records = await res.json();
+        let uploading = false;
 
-    document.getElementById('rec-badge').textContent = `${records.length} records`;
+        function updateBatchSummary() {
+            const count = selectedFiles.length;
+            document.getElementById('batch-summary').innerHTML =
+                count === 0 ? '0 files selected' :
+                `<strong>${count}</strong> file${count > 1 ? 's' : ''} selected — click "Upload All Files" to send them`;
+        }
 
-    if (records.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No shapefiles uploaded yet.</td></tr>`;
-      return;
-    }
+        // ─────────────────────────────────────────────────────────────
+        // UPLOAD ALL FILES (sequential)
+        // ─────────────────────────────────────────────────────────────
+        async function uploadAllFiles() {
+            const msg = document.getElementById('upload-msg');
+            msg.className = 'form-msg';
+            msg.textContent = '';
 
-    tbody.innerHTML = records.map(r => `
-      <tr>
-        <td class="rec-id">${r.id}</td>
-        <td>${r.name}</td>
-        <td>${r.spill_date}</td>
-        <td>${r.area_km2 != null ? Math.round(r.area_km2) + ' km²' : '—'}</td>
-        <td>
-          <div class="row-actions">
-            <button class="icon-btn" onclick="downloadShapefile('${r.id}')">⬇</button>
-            <button class="icon-btn danger" onclick="deleteRecord('${r.id}', '${r.name.replace(/'/g, "\\'")}')">✕</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">⚠️ ${err.message}</td></tr>`;
-  }
-}
+            if (selectedFiles.length === 0) {
+                showUploadMsg('Select at least one .zip file first.', 'error');
+                return;
+            }
 
-async function downloadShapefile(id) {
-  try {
-    const res = await fetch(`${API_BASE}/admin/spills/${id}/download`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error('Download failed');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `${id}.zip`;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    alert(err.message);
-  }
-}
+            if (uploading) return;
 
-async function deleteRecord(id, name) {
-  if (!confirm(`Delete "${name}" (${id})? This removes it from the database and the viewer.`)) return;
-  try {
-    const res = await fetch(`${API_BASE}/admin/spills/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error('Delete failed');
-    loadRecords();
-  } catch (err) {
-    alert(err.message);
-  }
-}
+            const btn = document.getElementById('btn-upload');
+            uploading = true;
+            btn.disabled = true;
+            btn.textContent = 'Uploading…';
 
-// ─────────────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────────────
-checkConnection();
-if (token) {
-  showDashboard();
-}
-</script>
+            // gather common metadata
+            const commonMeta = {
+                name: document.getElementById('up-name').value.trim() || '',
+                date: document.getElementById('up-date').value || '',
+                region: document.getElementById('up-region').value.trim() || '',
+                vessel: document.getElementById('up-vessel').value.trim() || '',
+                oil_type: document.getElementById('up-oiltype').value.trim() || '',
+                status: document.getElementById('up-status').value,
+            };
+
+            // We'll keep track of successes / failures
+            let successCount = 0;
+            let failCount = 0;
+            const total = selectedFiles.length;
+
+            // disable remove buttons during upload
+            document.querySelectorAll('.fremove').forEach(b => b.disabled = true);
+
+            // process each file sequentially
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const statusEl = document.getElementById(`fstatus-${i}`);
+                if (statusEl) {
+                    statusEl.textContent = 'uploading…';
+                    statusEl.className = 'fstatus uploading';
+                }
+
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file);
+
+                    // if name is blank, server will use filename; otherwise we send it
+                    if (commonMeta.name) fd.append('name', commonMeta.name);
+                    if (commonMeta.date) fd.append('spill_date', commonMeta.date);
+                    if (commonMeta.region) fd.append('region', commonMeta.region);
+                    if (commonMeta.vessel) fd.append('vessel', commonMeta.vessel);
+                    if (commonMeta.oil_type) fd.append('oil_type', commonMeta.oil_type);
+                    fd.append('status', commonMeta.status);
+
+                    const res = await fetch(`${API_BASE}/admin/upload`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: fd
+                    });
+
+                    const body = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(body.detail || `Upload failed (${res.status})`);
+
+                    // success
+                    successCount++;
+                    if (statusEl) {
+                        statusEl.textContent = '✓ done';
+                        statusEl.className = 'fstatus ok';
+                    }
+                } catch (err) {
+                    failCount++;
+                    if (statusEl) {
+                        statusEl.textContent = '✗ ' + (err.message || 'failed');
+                        statusEl.className = 'fstatus err';
+                    }
+                }
+            }
+
+            // re-enable remove buttons
+            document.querySelectorAll('.fremove').forEach(b => b.disabled = false);
+
+            // show summary
+            let summaryMsg = `Uploaded ${successCount} of ${total} file(s).`;
+            if (failCount > 0) summaryMsg += ` ${failCount} failed.`;
+            if (successCount > 0) summaryMsg += ' Refreshing records…';
+
+            showUploadMsg(summaryMsg, failCount === 0 ? 'success' : 'info');
+
+            // clear selected files if all succeeded, or leave failed ones?
+            // We'll remove only the successful ones from the list.
+            if (successCount > 0) {
+                // rebuild selectedFiles keeping only those that failed
+                // We need to track which ones failed. Let's re-fetch statuses.
+                const newSelected = [];
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const el = document.getElementById(`fstatus-${i}`);
+                    if (el && el.textContent.includes('✗')) {
+                        // failed — keep it
+                        newSelected.push(selectedFiles[i]);
+                    }
+                }
+                selectedFiles = newSelected;
+                renderFileList();
+                updateBatchSummary();
+            }
+
+            // reload records if any succeeded
+            if (successCount > 0) {
+                await loadRecords();
+            }
+
+            // reset upload button
+            uploading = false;
+            btn.disabled = false;
+            btn.textContent = 'Upload All Files';
+
+            // if all files were removed (all succeeded), clear the message after a bit
+            if (selectedFiles.length === 0 && successCount > 0) {
+                setTimeout(() => {
+                    const m = document.getElementById('upload-msg');
+                    if (m.classList.contains('show')) {
+                        m.className = 'form-msg';
+                        m.textContent = '';
+                    }
+                }, 5000);
+            }
+        }
+
+        function showUploadMsg(text, type) {
+            const msg = document.getElementById('upload-msg');
+            msg.textContent = text;
+            msg.className = `form-msg show ${type}`;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // RECORDS TABLE
+        // ─────────────────────────────────────────────────────────────
+        async function loadRecords() {
+            const tbody = document.getElementById('rec-tbody');
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/spills`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) { logout(); return; }
+                if (!res.ok) throw new Error('Failed to load records');
+                const records = await res.json();
+
+                document.getElementById('rec-badge').textContent = `${records.length} records`;
+
+                if (records.length === 0) {
+                    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No shapefiles uploaded yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = records.map(r => `
+              <tr>
+                <td class="rec-id">${r.id}</td>
+                <td>${r.name}</td>
+                <td>${r.spill_date}</td>
+                <td>${r.area_km2 != null ? Math.round(r.area_km2) + ' km²' : '—'}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" onclick="downloadShapefile('${r.id}')">⬇</button>
+                    <button class="icon-btn danger" onclick="deleteRecord('${r.id}', '${r.name.replace(/'/g, "\\'")}')">✕</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr class="empty-row"><td colspan="5">⚠️ ${err.message}</td></tr>`;
+            }
+        }
+
+        async function downloadShapefile(id) {
+            try {
+                const res = await fetch(`${API_BASE}/admin/spills/${id}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Download failed');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${id}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function deleteRecord(id, name) {
+            if (!confirm(`Delete "${name}" (${id})? This removes it from the database and the viewer.`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/admin/spills/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Delete failed');
+                loadRecords();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // INIT
+        // ─────────────────────────────────────────────────────────────
+        checkConnection();
+        if (token) {
+            showDashboard();
+        }
+    </script>
+
 </body>
 </html>
