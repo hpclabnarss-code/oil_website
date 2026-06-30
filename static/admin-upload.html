@@ -104,6 +104,7 @@ select{
 .file-item .fstatus.ok{color:#86efac;}
 .file-item .fstatus.err{color:#fca5a5;}
 .file-item .fstatus.uploading{color:#fbbf24;}
+.file-item .fstatus.skipped{color:#facc15;} /* yellow for duplicates */
 .file-item .fremove{
   background:transparent;border:none;color:#7a9ab8;cursor:pointer;
   font-size:14px;line-height:1;padding:0 4px;flex-shrink:0;
@@ -189,20 +190,20 @@ select{
     <div class="panel">
       <div class="panel-title">📤 Upload Shapefiles</div>
       <div class="panel-sub">
-        Select multiple <strong>.zip</strong> files (each containing .shp + .shx + .dbf + optional .prj).
+        Select multiple <strong>.zip</strong> files. Duplicates (by name) are automatically skipped.
         All files share the same metadata below.
       </div>
 
       <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
         <div class="dz-icon">🗂️</div>
         <div class="dz-text" id="dz-text">Click to choose .zip files, or drag them here</div>
-        <div class="dz-sub">Multiple files supported — each must contain .shp + .shx + .dbf</div>
+        <div class="dz-sub">Multiple files — each must contain .shp + .shx + .dbf</div>
         <div class="file-list" id="file-list"></div>
       </div>
       <input type="file" id="file-input" accept=".zip" multiple style="display:none">
 
       <div class="field">
-        <label class="fl">Spill Name (optional – auto‑filled from filename)</label>
+        <label class="fl">Spill Name (optional – if filled, ALL files get this name; leave blank to use each filename)</label>
         <input type="text" id="up-name" placeholder="Leave blank to auto‑generate from each filename">
       </div>
       <div class="field">
@@ -300,12 +301,9 @@ async function login() {
       throw new Error(body.detail || 'Login failed');
     }
     const data = await res.json();
-    console.log('🔑 Login response:', data); // DEBUG
-
+    console.log('🔑 Login response:', data);
     token = data.token || data.access_token || null;
-    if (!token) {
-      throw new Error('No token received. Check response: ' + JSON.stringify(data));
-    }
+    if (!token) throw new Error('No token received. Check response: ' + JSON.stringify(data));
     sessionStorage.setItem('admin_token', token);
     showDashboard();
   } catch (err) {
@@ -417,7 +415,7 @@ function updateBatchSummary() {
     `<strong>${count}</strong> file${count > 1 ? 's' : ''} selected — click "Upload All Files" to send them`;
 }
 
-// ─── UPLOAD ALL FILES ───
+// ─── DUPLICATE DETECTION + UPLOAD ───
 async function uploadAllFiles() {
   const msg = document.getElementById('upload-msg');
   msg.className = 'form-msg';
@@ -436,8 +434,32 @@ async function uploadAllFiles() {
   const btn = document.getElementById('btn-upload');
   uploading = true;
   btn.disabled = true;
-  btn.textContent = 'Uploading…';
+  btn.textContent = 'Checking duplicates…';
 
+  // 1) Fetch existing records to get the list of used names
+  let existingNames = new Set();
+  try {
+    const res = await fetch(`${API_BASE}/admin/spills`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const records = await res.json();
+      existingNames = new Set(records.map(r => r.name));
+    } else if (res.status === 401) {
+      logout();
+      showUploadMsg('Session expired. Please log in again.', 'error');
+      uploading = false;
+      btn.disabled = false;
+      btn.textContent = 'Upload All Files';
+      return;
+    } else {
+      console.warn('Could not fetch records for duplicate check, proceeding anyway.');
+    }
+  } catch (e) {
+    console.warn('Failed to fetch records for duplicate check:', e);
+  }
+
+  // 2) Determine candidate name for each file and filter duplicates
   const commonMeta = {
     name: document.getElementById('up-name').value.trim(),
     date: document.getElementById('up-date').value,
@@ -447,13 +469,48 @@ async function uploadAllFiles() {
     status: document.getElementById('up-status').value,
   };
 
-  let successCount = 0, failCount = 0;
-  const total = selectedFiles.length;
-
-  document.querySelectorAll('.fremove').forEach(b => b.disabled = true);
+  const toUpload = [];
+  const duplicateIndices = [];
 
   for (let i = 0; i < selectedFiles.length; i++) {
     const file = selectedFiles[i];
+    let candidateName = commonMeta.name; // if user provided a name, it's shared
+    if (!candidateName) {
+      // server auto‑generates from filename (without .zip)
+      candidateName = file.name.replace(/\.[^.]+$/, '');
+    }
+    if (existingNames.has(candidateName)) {
+      duplicateIndices.push(i);
+      const statusEl = document.getElementById(`fstatus-${i}`);
+      if (statusEl) {
+        statusEl.textContent = '⏭ skipped (duplicate)';
+        statusEl.className = 'fstatus skipped';
+      }
+    } else {
+      toUpload.push({ index: i, file, candidateName });
+    }
+  }
+
+  if (toUpload.length === 0) {
+    showUploadMsg(`All ${selectedFiles.length} file(s) are duplicates. No uploads performed.`, 'info');
+    uploading = false;
+    btn.disabled = false;
+    btn.textContent = 'Upload All Files';
+    // keep them in the queue so user can rename/remove them
+    return;
+  }
+
+  // 3) Upload only unique files
+  btn.textContent = `Uploading ${toUpload.length} file(s)...`;
+  let successCount = 0, failCount = 0;
+  const total = toUpload.length;
+
+  // disable remove buttons
+  document.querySelectorAll('.fremove').forEach(b => b.disabled = true);
+
+  for (const item of toUpload) {
+    const file = item.file;
+    const i = item.index;
     const statusEl = document.getElementById(`fstatus-${i}`);
     if (statusEl) {
       statusEl.textContent = 'uploading…';
@@ -463,13 +520,14 @@ async function uploadAllFiles() {
     try {
       const fd = new FormData();
       fd.append('file', file);
+      // If user provided a name, send it; otherwise server uses filename
       if (commonMeta.name) fd.append('name', commonMeta.name);
       if (commonMeta.date) fd.append('spill_date', commonMeta.date);
       if (commonMeta.region) fd.append('region', commonMeta.region);
       if (commonMeta.vessel) fd.append('vessel', commonMeta.vessel);
       if (commonMeta.oil_type) fd.append('oil_type', commonMeta.oil_type);
       fd.append('status', commonMeta.status);
-      // If your backend requires 'severity' or 'source', add them here:
+      // If your backend requires extra fields, add them here:
       // fd.append('severity', '');
       // fd.append('source', '');
 
@@ -496,18 +554,23 @@ async function uploadAllFiles() {
     }
   }
 
+  // re-enable remove buttons
   document.querySelectorAll('.fremove').forEach(b => b.disabled = false);
 
-  let summaryMsg = `Uploaded ${successCount} of ${total} file(s).`;
-  if (failCount > 0) summaryMsg += ` ${failCount} failed.`;
+  // 4) Build summary
+  let summaryMsg = `Uploaded ${successCount} of ${total} unique file(s).`;
+  if (duplicateIndices.length > 0) summaryMsg += ` Skipped ${duplicateIndices.length} duplicate(s).`;
+  if (failCount > 0) summaryMsg += ` ${failCount} uploads failed.`;
   if (successCount > 0) summaryMsg += ' Refreshing records…';
   showUploadMsg(summaryMsg, failCount === 0 ? 'success' : 'info');
 
-  if (successCount > 0) {
+  // 5) Remove successful files from queue, keep failed + duplicates
+  if (successCount > 0 || duplicateIndices.length > 0) {
     const newSelected = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const el = document.getElementById(`fstatus-${i}`);
-      if (el && el.textContent.includes('✗')) {
+      // keep if failed (✗) or skipped (⏭)
+      if (el && (el.textContent.includes('✗') || el.textContent.includes('⏭'))) {
         newSelected.push(selectedFiles[i]);
       }
     }
@@ -524,7 +587,8 @@ async function uploadAllFiles() {
   btn.disabled = false;
   btn.textContent = 'Upload All Files';
 
-  if (selectedFiles.length === 0 && successCount > 0) {
+  // auto-clear message if queue is empty and all good
+  if (selectedFiles.length === 0 && successCount > 0 && duplicateIndices.length === 0) {
     setTimeout(() => {
       const m = document.getElementById('upload-msg');
       if (m.classList.contains('show')) {
@@ -545,31 +609,22 @@ function showUploadMsg(text, type) {
 async function loadRecords() {
   const tbody = document.getElementById('rec-tbody');
   tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
-
   if (!token) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Not authenticated. Please log in.</td></tr>`;
     return;
   }
-
   try {
     const res = await fetch(`${API_BASE}/admin/spills`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (res.status === 401) { 
-      console.warn('⚠️ 401 Unauthorized – token may be invalid or expired. Logging out.');
-      logout(); 
-      return; 
-    }
+    if (res.status === 401) { logout(); return; }
     if (!res.ok) throw new Error('Failed to load records');
     const records = await res.json();
-
     document.getElementById('rec-badge').textContent = `${records.length} records`;
-
     if (records.length === 0) {
       tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No shapefiles uploaded yet.</td></tr>`;
       return;
     }
-
     tbody.innerHTML = records.map(r => `
       <tr>
         <td class="rec-id">${r.id}</td>
