@@ -78,7 +78,6 @@ select{
 .panel-title{font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:3px;}
 .panel-sub{font-size:10.5px;color:#3d5068;margin-bottom:18px;line-height:1.5;}
 
-/* dropzone multi-file */
 .dropzone{
   border:1.5px dashed #1b2336;border-radius:8px;padding:16px 14px;
   text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
@@ -151,7 +150,6 @@ select{
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="logo">🛢</div>
   <div>
@@ -169,7 +167,6 @@ select{
   </div>
 </header>
 
-<!-- LOGIN -->
 <div class="login-wrap" id="login-wrap">
   <div class="login-icon">🔒</div>
   <div class="login-title">Admin Login</div>
@@ -187,11 +184,8 @@ select{
   <div class="hint-small">Default dev credentials: admin / changeme123<br>(set ADMIN_USERNAME / ADMIN_PASSWORD on the server to change this)</div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dash" id="dash">
   <div class="grid">
-
-    <!-- UPLOAD PANEL (multi-file) -->
     <div class="panel">
       <div class="panel-title">📤 Upload Shapefiles</div>
       <div class="panel-sub">
@@ -247,7 +241,6 @@ select{
       <div class="form-msg" id="upload-msg"></div>
     </div>
 
-    <!-- RECORDS PANEL -->
     <div class="panel">
       <div class="rec-bar">
         <div>
@@ -263,24 +256,16 @@ select{
         </table>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-// =====================================================================
-//  CONFIG
-// =====================================================================
 const API_BASE = "/api";
-
-// token is read from sessionStorage (set after login)
 let token = sessionStorage.getItem('admin_token') || null;
-let selectedFiles = [];  // array of File objects
+let selectedFiles = [];
 let uploading = false;
 
-// ─────────────────────────────────────────────────────────────
-// CONNECTION INDICATOR
-// ─────────────────────────────────────────────────────────────
+// ─── CONNECTION ───
 async function checkConnection() {
   try {
     const res = await fetch(`${API_BASE}/health`);
@@ -294,9 +279,7 @@ function setConn(ok, label) {
   document.getElementById('conn-label').textContent = label;
 }
 
-// ─────────────────────────────────────────────────────────────
-// AUTH
-// ─────────────────────────────────────────────────────────────
+// ─── AUTH ───
 async function login() {
   const username = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
@@ -317,7 +300,12 @@ async function login() {
       throw new Error(body.detail || 'Login failed');
     }
     const data = await res.json();
-    token = data.token;
+    console.log('🔑 Login response:', data); // DEBUG
+
+    token = data.token || data.access_token || null;
+    if (!token) {
+      throw new Error('No token received. Check response: ' + JSON.stringify(data));
+    }
     sessionStorage.setItem('admin_token', token);
     showDashboard();
   } catch (err) {
@@ -348,9 +336,7 @@ function showDashboard() {
   updateBatchSummary();
 }
 
-// ─────────────────────────────────────────────────────────────
-// FILE PICKER / DROPZONE (multi-file)
-// ─────────────────────────────────────────────────────────────
+// ─── FILE SELECTION ───
 const dz = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 
@@ -358,11 +344,8 @@ fileInput.addEventListener('change', function(e) {
   const files = Array.from(e.target.files);
   if (files.length === 0) return;
   const zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
-  if (zips.length !== files.length) {
-    alert('Only .zip files are accepted. Non-zip files were ignored.');
-  }
+  if (zips.length !== files.length) alert('Only .zip files accepted. Non-zip ignored.');
   if (zips.length === 0) return;
-  // Append new files, avoid duplicates by name
   const existingNames = new Set(selectedFiles.map(f => f.name));
   for (const f of zips) {
     if (!existingNames.has(f.name)) {
@@ -372,22 +355,15 @@ fileInput.addEventListener('change', function(e) {
   }
   renderFileList();
   updateBatchSummary();
-  fileInput.value = ''; // allow re-selecting same file
+  fileInput.value = '';
 });
 
-['dragenter','dragover'].forEach(evt => dz.addEventListener(evt, e => {
-  e.preventDefault(); dz.classList.add('drag');
-}));
-['dragleave','drop'].forEach(evt => dz.addEventListener(evt, e => {
-  e.preventDefault(); dz.classList.remove('drag');
-}));
+['dragenter','dragover'].forEach(evt => dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(evt => dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.remove('drag'); }));
 dz.addEventListener('drop', function(e) {
   const files = Array.from(e.dataTransfer.files);
   const zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
-  if (zips.length === 0) {
-    alert('Please drop .zip files only.');
-    return;
-  }
+  if (zips.length === 0) { alert('Please drop .zip files only.'); return; }
   const existingNames = new Set(selectedFiles.map(f => f.name));
   for (const f of zips) {
     if (!existingNames.has(f.name)) {
@@ -409,17 +385,14 @@ function removeFile(index) {
 function renderFileList() {
   const container = document.getElementById('file-list');
   const dzEl = document.getElementById('dropzone');
-
   if (selectedFiles.length === 0) {
     container.innerHTML = '';
     dzEl.classList.remove('has-files');
     document.getElementById('dz-text').textContent = 'Click to choose .zip files, or drag them here';
     return;
   }
-
   dzEl.classList.add('has-files');
   document.getElementById('dz-text').textContent = `${selectedFiles.length} file(s) selected — click to add more`;
-
   container.innerHTML = selectedFiles.map((f, i) => `
     <div class="file-item" data-index="${i}">
       <span class="fname">${f.name}</span>
@@ -427,7 +400,6 @@ function renderFileList() {
       <button class="fremove" data-index="${i}" title="Remove" ${uploading ? 'disabled' : ''}>&times;</button>
     </div>
   `).join('');
-
   container.querySelectorAll('.fremove').forEach(btn => {
     const idx = parseInt(btn.dataset.index);
     btn.addEventListener('click', function(e) {
@@ -445,9 +417,7 @@ function updateBatchSummary() {
     `<strong>${count}</strong> file${count > 1 ? 's' : ''} selected — click "Upload All Files" to send them`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// UPLOAD ALL FILES (sequential)
-// ─────────────────────────────────────────────────────────────
+// ─── UPLOAD ALL FILES ───
 async function uploadAllFiles() {
   const msg = document.getElementById('upload-msg');
   msg.className = 'form-msg';
@@ -457,7 +427,6 @@ async function uploadAllFiles() {
     showUploadMsg('Select at least one .zip file first.', 'error');
     return;
   }
-
   if (uploading) return;
   if (!token) {
     showUploadMsg('You are not logged in. Please refresh and sign in again.', 'error');
@@ -469,7 +438,6 @@ async function uploadAllFiles() {
   btn.disabled = true;
   btn.textContent = 'Uploading…';
 
-  // collect common metadata
   const commonMeta = {
     name: document.getElementById('up-name').value.trim(),
     date: document.getElementById('up-date').value,
@@ -479,11 +447,9 @@ async function uploadAllFiles() {
     status: document.getElementById('up-status').value,
   };
 
-  let successCount = 0;
-  let failCount = 0;
+  let successCount = 0, failCount = 0;
   const total = selectedFiles.length;
 
-  // disable remove buttons
   document.querySelectorAll('.fremove').forEach(b => b.disabled = true);
 
   for (let i = 0; i < selectedFiles.length; i++) {
@@ -496,14 +462,14 @@ async function uploadAllFiles() {
 
     try {
       const fd = new FormData();
-      fd.append('file', file);  // make sure your backend expects 'file'
+      fd.append('file', file);
       if (commonMeta.name) fd.append('name', commonMeta.name);
       if (commonMeta.date) fd.append('spill_date', commonMeta.date);
       if (commonMeta.region) fd.append('region', commonMeta.region);
       if (commonMeta.vessel) fd.append('vessel', commonMeta.vessel);
       if (commonMeta.oil_type) fd.append('oil_type', commonMeta.oil_type);
       fd.append('status', commonMeta.status);
-      // If your backend requires 'severity' or 'source', add them here (even empty)
+      // If your backend requires 'severity' or 'source', add them here:
       // fd.append('severity', '');
       // fd.append('source', '');
 
@@ -530,7 +496,6 @@ async function uploadAllFiles() {
     }
   }
 
-  // re-enable remove buttons
   document.querySelectorAll('.fremove').forEach(b => b.disabled = false);
 
   let summaryMsg = `Uploaded ${successCount} of ${total} file(s).`;
@@ -538,7 +503,6 @@ async function uploadAllFiles() {
   if (successCount > 0) summaryMsg += ' Refreshing records…';
   showUploadMsg(summaryMsg, failCount === 0 ? 'success' : 'info');
 
-  // Remove successful files from the queue (keep failed ones)
   if (successCount > 0) {
     const newSelected = [];
     for (let i = 0; i < selectedFiles.length; i++) {
@@ -577,18 +541,25 @@ function showUploadMsg(text, type) {
   msg.className = `form-msg show ${type}`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// RECORDS TABLE
-// ─────────────────────────────────────────────────────────────
+// ─── RECORDS ───
 async function loadRecords() {
   const tbody = document.getElementById('rec-tbody');
   tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
+
+  if (!token) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Not authenticated. Please log in.</td></tr>`;
+    return;
+  }
 
   try {
     const res = await fetch(`${API_BASE}/admin/spills`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (res.status === 401) { logout(); return; }
+    if (res.status === 401) { 
+      console.warn('⚠️ 401 Unauthorized – token may be invalid or expired. Logging out.');
+      logout(); 
+      return; 
+    }
     if (!res.ok) throw new Error('Failed to load records');
     const records = await res.json();
 
@@ -636,7 +607,7 @@ async function downloadShapefile(id) {
 }
 
 async function deleteRecord(id, name) {
-  if (!confirm(`Delete "${name}" (${id})? This removes it from the database and the viewer.`)) return;
+  if (!confirm(`Delete "${name}" (${id})?`)) return;
   try {
     const res = await fetch(`${API_BASE}/admin/spills/${id}`, {
       method: 'DELETE',
@@ -649,9 +620,7 @@ async function deleteRecord(id, name) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────────────
+// ─── INIT ───
 checkConnection();
 if (token) {
   showDashboard();
