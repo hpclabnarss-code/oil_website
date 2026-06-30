@@ -104,7 +104,7 @@ select{
 .file-item .fstatus.ok{color:#86efac;}
 .file-item .fstatus.err{color:#fca5a5;}
 .file-item .fstatus.uploading{color:#fbbf24;}
-.file-item .fstatus.skipped{color:#facc15;} /* yellow for duplicates */
+.file-item .fstatus.skipped{color:#facc15;}
 .file-item .fremove{
   background:transparent;border:none;color:#7a9ab8;cursor:pointer;
   font-size:14px;line-height:1;padding:0 4px;flex-shrink:0;
@@ -208,7 +208,8 @@ select{
       </div>
       <div class="field">
         <label class="fl">Spill Date (optional – auto‑extracted from .dbf)</label>
-        <input type="date" id="up-date">
+        <!-- DEFAULT DATE SET TO 2014-01-01 -->
+        <input type="date" id="up-date" value="2014-01-01">
       </div>
       <div class="field-row2">
         <div class="field">
@@ -462,7 +463,7 @@ async function uploadAllFiles() {
   // 2) Determine candidate name for each file and filter duplicates
   const commonMeta = {
     name: document.getElementById('up-name').value.trim(),
-    date: document.getElementById('up-date').value,
+    date: document.getElementById('up-date').value, // now defaults to 2014-01-01
     region: document.getElementById('up-region').value.trim(),
     vessel: document.getElementById('up-vessel').value.trim(),
     oil_type: document.getElementById('up-oiltype').value.trim(),
@@ -474,9 +475,8 @@ async function uploadAllFiles() {
 
   for (let i = 0; i < selectedFiles.length; i++) {
     const file = selectedFiles[i];
-    let candidateName = commonMeta.name; // if user provided a name, it's shared
+    let candidateName = commonMeta.name;
     if (!candidateName) {
-      // server auto‑generates from filename (without .zip)
       candidateName = file.name.replace(/\.[^.]+$/, '');
     }
     if (existingNames.has(candidateName)) {
@@ -496,7 +496,6 @@ async function uploadAllFiles() {
     uploading = false;
     btn.disabled = false;
     btn.textContent = 'Upload All Files';
-    // keep them in the queue so user can rename/remove them
     return;
   }
 
@@ -505,7 +504,6 @@ async function uploadAllFiles() {
   let successCount = 0, failCount = 0;
   const total = toUpload.length;
 
-  // disable remove buttons
   document.querySelectorAll('.fremove').forEach(b => b.disabled = true);
 
   for (const item of toUpload) {
@@ -520,7 +518,6 @@ async function uploadAllFiles() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      // If user provided a name, send it; otherwise server uses filename
       if (commonMeta.name) fd.append('name', commonMeta.name);
       if (commonMeta.date) fd.append('spill_date', commonMeta.date);
       if (commonMeta.region) fd.append('region', commonMeta.region);
@@ -554,22 +551,18 @@ async function uploadAllFiles() {
     }
   }
 
-  // re-enable remove buttons
   document.querySelectorAll('.fremove').forEach(b => b.disabled = false);
 
-  // 4) Build summary
   let summaryMsg = `Uploaded ${successCount} of ${total} unique file(s).`;
   if (duplicateIndices.length > 0) summaryMsg += ` Skipped ${duplicateIndices.length} duplicate(s).`;
   if (failCount > 0) summaryMsg += ` ${failCount} uploads failed.`;
   if (successCount > 0) summaryMsg += ' Refreshing records…';
   showUploadMsg(summaryMsg, failCount === 0 ? 'success' : 'info');
 
-  // 5) Remove successful files from queue, keep failed + duplicates
   if (successCount > 0 || duplicateIndices.length > 0) {
     const newSelected = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const el = document.getElementById(`fstatus-${i}`);
-      // keep if failed (✗) or skipped (⏭)
       if (el && (el.textContent.includes('✗') || el.textContent.includes('⏭'))) {
         newSelected.push(selectedFiles[i]);
       }
@@ -587,7 +580,6 @@ async function uploadAllFiles() {
   btn.disabled = false;
   btn.textContent = 'Upload All Files';
 
-  // auto-clear message if queue is empty and all good
   if (selectedFiles.length === 0 && successCount > 0 && duplicateIndices.length === 0) {
     setTimeout(() => {
       const m = document.getElementById('upload-msg');

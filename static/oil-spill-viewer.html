@@ -1,562 +1,1020 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NARSS Oil Spill Monitoring Portal</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NARSS Oil Spill Monitoring Portal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <style>
+    /* ─── Reset & base ─── */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#090c12;color:#ffffff;
-  height:100vh;display:flex;flex-direction:column;overflow:hidden;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #090c12;
+      color: #e8edf5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-/* ── HEADER ── */
-header{
-  background:#0e1420;border-bottom:1px solid #1b2336;
-  padding:0 18px;height:52px;display:flex;align-items:center;
-  gap:12px;flex-shrink:0;z-index:200;
-}
-.logo{
-  width:30px;height:30px;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.logo img{
-  height:30px;width:auto;border-radius:4px;
-}
-.h-title{font-size:14px;font-weight:700;color:#ffffff;}
-.h-sub{display:none;}
-.h-pills{margin-left:auto;display:flex;gap:8px;align-items:center;}
-.h-pill{
-  background:#131c2b;border:1px solid #1b2336;border-radius:100px;
-  padding:4px 12px;font-size:11px;display:flex;align-items:center;gap:5px;
-}
-.h-pill-v{color:#ffffff;font-weight:700;}
-.h-pill-l{color:#ffffff;}
-.conn-dot{width:6px;height:6px;border-radius:50%;background:#3d5068;}
-.conn-dot.ok{background:#16a34a;}
-.conn-dot.bad{background:#dc2626;}
-.conn-label{font-size:10px;color:#ffffff;}
-.header-team{
-  color:#ffffff;font-size:9px;letter-spacing:.05em;
-  display:flex;align-items:center;gap:6px;
-}
-.header-team img{height:24px;width:auto;border-radius:4px;}
-.header-team span{color:#ffffff;}
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0e1420;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1b2336;
+      border-radius: 4px;
+    }
 
-/* ── BODY LAYOUT ── */
-.body{display:flex;flex:1;overflow:hidden;}
+    /* ─── Header ─── */
+    header {
+      background: #0a0f1a;
+      border-bottom: 1px solid #1b2336;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      z-index: 200;
+    }
 
-/* ── SIDEBAR ── */
-.sidebar{
-  width:282px;min-width:282px;background:#0e1420;
-  border-right:1px solid #1b2336;display:flex;flex-direction:column;overflow:hidden;
-}
+    .logo {
+      height: 34px;
+      width: auto;
+      border-radius: 6px;
+      background: #151f30;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo img {
+      height: 28px;
+      width: auto;
+    }
 
-/* ── FILTER SECTION ── */
-.filter-wrap{padding:13px 13px 10px;border-bottom:1px solid #1b2336;flex-shrink:0;}
-.sec-title{
-  font-size:9px;font-weight:700;color:#ffffff;text-transform:uppercase;
-  letter-spacing:.1em;margin-bottom:10px;
-}
-.field{margin-bottom:9px;}
-.fl{font-size:10px;color:#ffffff;display:block;margin-bottom:3px;}
+    .h-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f0f4f8;
+      letter-spacing: -0.01em;
+    }
+    .h-sub {
+      font-size: 11px;
+      color: #6a7f9a;
+      margin-left: 6px;
+    }
 
-.field select,
-.field input[type=date]{
-  width:100%;background:#090c12;border:1px solid #1b2336;
-  color:#ffffff;border-radius:5px;padding:6px 8px;font-size:11px;outline:none;
-}
-.field select:focus,.field input:focus{border-color:#2a5aac;}
+    .h-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-.date-duo{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .h-pill {
+      background: #0e1420;
+      border: 1px solid #1b2336;
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #b0c4de;
+    }
+    .h-pill strong {
+      color: #fff;
+      font-weight: 600;
+    }
 
-.action-row{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:10px;}
-.btn-apply{
-  padding:8px;background:#1a3c8f;color:#ffffff;border:none;
-  border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;
-}
-.btn-apply:hover{background:#2554c7;}
-.btn-apply:disabled{background:#1b2336;color:#3d5068;cursor:default;}
-.btn-reset{
-  padding:8px 11px;background:transparent;color:#ffffff;
-  border:1px solid #1b2336;border-radius:5px;font-size:11px;cursor:pointer;
-}
-.btn-reset:hover{background:#131c2b;color:#ffffff;}
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3d5068;
+      display: inline-block;
+    }
+    .conn-dot.ok {
+      background: #10b981;
+    }
+    .conn-dot.bad {
+      background: #ef4444;
+    }
 
-.hint{font-size:9.5px;color:#ffffff;margin-top:8px;line-height:1.5;}
-.hint strong{color:#ffffff;}
+    .header-team {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #6a7f9a;
+    }
+    .header-team img {
+      height: 26px;
+      width: auto;
+      border-radius: 4px;
+    }
 
-/* ── RESULTS PANEL ── */
-.results-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.results-bar{
-  padding:9px 13px 8px;display:flex;align-items:center;
-  justify-content:space-between;border-bottom:1px solid #1b2336;flex-shrink:0;
-}
-.r-badge{
-  background:#151f30;color:#ffffff;font-size:10px;font-weight:700;
-  padding:2px 8px;border-radius:10px;
-}
-.results-list{flex:1;overflow-y:auto;padding:7px 7px 14px;}
-.results-list::-webkit-scrollbar{width:3px;}
-.results-list::-webkit-scrollbar-thumb{background:#1b2336;border-radius:2px;}
+    /* ─── Body ─── */
+    .body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-/* ── SPILL CARD ── */
-.spill-card{
-  background:#090c12;border:1px solid #1b2336;
-  border-left:3px solid #1b2336;
-  border-radius:5px;padding:9px 11px;margin-bottom:5px;cursor:pointer;
-  transition:border-color .12s,background .12s;
-}
-.spill-card:hover{background:#0e1420;border-color:#2a3a50;}
-.spill-card.sel{background:#0b1628;border-color:#2a5aac;}
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: 300px;
+      min-width: 300px;
+      background: #0a0f1a;
+      border-right: 1px solid #1b2336;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-.c-id{font-size:9px;font-family:'SF Mono','Fira Code',monospace;color:#4d8fd9;letter-spacing:.02em;display:block;margin-bottom:2px;}
-.c-name{font-size:12px;font-weight:600;color:#ffffff;margin-bottom:4px;line-height:1.3;}
-.c-meta{display:flex;gap:9px;flex-wrap:wrap;}
-.c-meta span{font-size:10px;color:#ffffff;}
+    /* ─── Filter section ─── */
+    .filter-wrap {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #1b2336;
+      flex-shrink: 0;
+    }
 
-/* ── MAP AREA ── */
-.map-area{flex:1;position:relative;}
-#map{width:100%;height:100%;background:#07090f;}
+    .sec-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6a7f9a;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sec-title span {
+      font-size: 14px;
+    }
 
-/* ── INFO BAR ── */
-.info-bar{
-  position:absolute;top:10px;left:50%;transform:translateX(-50%);
-  background:rgba(14,20,32,.94);border:1px solid #1b2336;border-radius:100px;
-  padding:5px 16px;z-index:600;display:none;align-items:center;
-  gap:10px;font-size:10px;white-space:nowrap;
-}
-.ib-stat{color:#ffffff;}
-.ib-stat strong{color:#ffffff;}
-.ib-sep{width:1px;height:11px;background:#1b2336;}
+    .field {
+      margin-bottom: 10px;
+    }
+    .fl {
+      font-size: 10px;
+      color: #8a9fb0;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
 
-/* ── DETAIL CARD ── */
-.detail-card{
-  position:absolute;top:50px;right:10px;width:256px;
-  background:rgba(14,20,32,.97);border:1px solid #1b2336;border-radius:9px;
-  padding:13px;z-index:600;display:none;
-}
-.detail-card.show{display:block;}
-.dc-hd{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px;}
-.dc-title{flex:1;font-size:13px;font-weight:700;color:#ffffff;line-height:1.35;}
-.dc-close{background:none;border:none;color:#ffffff;cursor:pointer;font-size:18px;padding:0;line-height:1;}
-.dc-close:hover{color:#7a9ab8;}
-.dc-sep{height:1px;background:#1b2336;margin-bottom:7px;}
-.dc-row{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  padding:4px 0;font-size:11px;border-bottom:1px solid #090c12;
-}
-.dc-row:last-child{border-bottom:none;}
-.dc-l{color:#ffffff;flex-shrink:0;margin-right:8px;}
-.dc-v{color:#ffffff;font-weight:500;text-align:right;}
-.dc-v.mono{font-family:monospace;font-size:9px;color:#ffffff;}
-.dc-v.blue{color:#4d8fd9;font-family:monospace;font-size:10px;}
-.btn-zoom{
-  width:100%;margin-top:9px;padding:7px;background:transparent;
-  color:#4d8fd9;border:1px solid #1a3c6e;border-radius:5px;
-  font-size:11px;font-weight:600;cursor:pointer;
-}
-.btn-zoom:hover{background:#0a1828;}
+    .field select,
+    .field input[type="date"] {
+      width: 100%;
+      background: #0e1420;
+      border: 1px solid #1b2336;
+      color: #e8edf5;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      outline: none;
+      font-family: inherit;
+    }
+    .field select:focus,
+    .field input:focus {
+      border-color: #2a5aac;
+      box-shadow: 0 0 0 2px rgba(42, 90, 172, 0.2);
+    }
 
-/* ── EMPTY / LOADING ── */
-.empty{text-align:center;padding:28px 12px;color:#ffffff;}
-.empty-icon{font-size:26px;margin-bottom:8px;color:#ffffff;}
-.empty-msg{font-size:11px;line-height:1.6;color:#ffffff;}
-.empty-msg.err{color:#dc2626;}
+    .date-duo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
 
-/* ── LEGEND ── */
-.legend{
-  position:absolute;bottom:30px;right:10px;z-index:600;
-  background:rgba(14,20,32,.94);border:1px solid #1b2336;
-  border-radius:6px;padding:10px 12px;font-size:10px;
-}
-.legend-title{font-weight:700;margin-bottom:5px;color:#ffffff;}
-.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:3px;color:#ffffff;}
-.legend-item:last-child{margin-bottom:0;}
-.legend-color{display:inline-block;width:18px;height:3px;border-radius:2px;}
-.legend-color.active{background:#10b981;border:1px solid #059669;}
-.legend-color.historical{background:#059669;border:1px solid #10b981;opacity:0.6;}
-.legend-text{color:#ffffff;}
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 12px;
+    }
 
-/* ── LEAFLET OVERRIDES ── */
-.oil-tip{
-  background:rgba(14,20,32,.96)!important;border:1px solid #1b2336!important;
-  color:#ffffff!important;font-size:11px!important;border-radius:5px!important;
-  padding:5px 9px!important;box-shadow:none!important;
-}
-.oil-tip::before{display:none!important;}
-.leaflet-control-zoom{border:1px solid #1b2336!important;}
-.leaflet-control-zoom-in,.leaflet-control-zoom-out{
-  background:#0e1420!important;color:#ffffff!important;
-  border-bottom:1px solid #1b2336!important;
-}
-.leaflet-control-zoom-in:hover,.leaflet-control-zoom-out:hover{
-  background:#131c2b!important;color:#ffffff!important;
-}
-.leaflet-control-attribution{
-  background:rgba(14,20,32,.7)!important;color:#ffffff!important;font-size:9px!important;
-}
-.leaflet-control-attribution a{color:#4d8fd9!important;}
-</style>
+    .btn-apply {
+      padding: 8px 12px;
+      background: #1a3c8f;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-apply:hover {
+      background: #2554c7;
+    }
+    .btn-apply:disabled {
+      background: #1b2336;
+      color: #4a5a72;
+      cursor: default;
+    }
+
+    .btn-reset {
+      padding: 8px 14px;
+      background: transparent;
+      color: #8a9fb0;
+      border: 1px solid #1b2336;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-reset:hover {
+      background: #0e1420;
+      color: #e8edf5;
+    }
+
+    .hint {
+      font-size: 10px;
+      color: #5a6f88;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .hint strong {
+      color: #8a9fb0;
+    }
+
+    /* ─── Results panel ─── */
+    .results-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .results-bar {
+      padding: 10px 18px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1b2336;
+      flex-shrink: 0;
+    }
+    .r-badge {
+      background: #151f30;
+      color: #8a9fb0;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+
+    .results-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px 20px;
+    }
+
+    /* ─── Spill card ─── */
+    .spill-card {
+      background: #0e1420;
+      border: 1px solid #1b2336;
+      border-left: 3px solid #1b2336;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .spill-card:hover {
+      background: #131c2b;
+      border-color: #2a3a50;
+    }
+    .spill-card.sel {
+      background: #0b1a2e;
+      border-color: #2a5aac;
+      border-left-color: #2a5aac;
+    }
+
+    .c-id {
+      font-size: 9px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #4d8fd9;
+      letter-spacing: 0.02em;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .c-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f0f4f8;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .c-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .c-meta span {
+      font-size: 10px;
+      color: #8a9fb0;
+    }
+
+    /* ─── Empty / error states ─── */
+    .empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: #6a7f9a;
+    }
+    .empty-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.6;
+    }
+    .empty-msg {
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .empty-msg.err {
+      color: #f87171;
+    }
+
+    /* ─── Map area ─── */
+    .map-area {
+      flex: 1;
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #07090f;
+    }
+
+    /* ─── Info bar (floating) ─── */
+    .info-bar {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 15, 26, 0.92);
+      backdrop-filter: blur(6px);
+      border: 1px solid #1b2336;
+      border-radius: 30px;
+      padding: 6px 20px;
+      z-index: 600;
+      display: none;
+      align-items: center;
+      gap: 18px;
+      font-size: 11px;
+      color: #b0c4de;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .info-bar strong {
+      color: #fff;
+      font-weight: 600;
+    }
+    .info-bar .sep {
+      width: 1px;
+      height: 18px;
+      background: #1b2336;
+    }
+
+    /* ─── Detail card ─── */
+    .detail-card {
+      position: absolute;
+      top: 70px;
+      right: 14px;
+      width: 270px;
+      background: rgba(10, 15, 26, 0.96);
+      backdrop-filter: blur(6px);
+      border: 1px solid #1b2336;
+      border-radius: 10px;
+      padding: 16px;
+      z-index: 600;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      max-height: calc(100% - 100px);
+      overflow-y: auto;
+    }
+    .detail-card.show {
+      display: block;
+    }
+
+    .dc-hd {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .dc-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f0f4f8;
+      line-height: 1.3;
+    }
+    .dc-close {
+      background: none;
+      border: none;
+      color: #6a7f9a;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+    .dc-close:hover {
+      color: #e8edf5;
+    }
+
+    .dc-sep {
+      height: 1px;
+      background: #1b2336;
+      margin-bottom: 8px;
+    }
+
+    .dc-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 11px;
+      border-bottom: 1px solid #0e1420;
+    }
+    .dc-row:last-child {
+      border-bottom: none;
+    }
+    .dc-l {
+      color: #8a9fb0;
+      flex-shrink: 0;
+      margin-right: 10px;
+    }
+    .dc-v {
+      color: #e8edf5;
+      font-weight: 500;
+      text-align: right;
+    }
+    .dc-v.mono {
+      font-family: monospace;
+      font-size: 9px;
+      color: #8a9fb0;
+    }
+    .dc-v.blue {
+      color: #4d8fd9;
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    .btn-zoom {
+      width: 100%;
+      margin-top: 10px;
+      padding: 7px 0;
+      background: transparent;
+      color: #4d8fd9;
+      border: 1px solid #1a3c6e;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-zoom:hover {
+      background: #0a1828;
+      border-color: #2a5aac;
+    }
+
+    /* ─── Legend ─── */
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      right: 14px;
+      z-index: 500;
+      background: rgba(10, 15, 26, 0.92);
+      backdrop-filter: blur(4px);
+      border: 1px solid #1b2336;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 10px;
+      color: #b0c4de;
+      min-width: 110px;
+    }
+    .legend-title {
+      font-weight: 700;
+      color: #e8edf5;
+      margin-bottom: 6px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .legend-item:last-child {
+      margin-bottom: 0;
+    }
+    .legend-color {
+      display: inline-block;
+      width: 20px;
+      height: 3px;
+      border-radius: 3px;
+    }
+    .legend-color.active {
+      background: #10b981;
+      border: 1px solid #059669;
+    }
+    .legend-color.historical {
+      background: #059669;
+      border: 1px solid #10b981;
+      opacity: 0.6;
+    }
+    .legend-text {
+      color: #b0c4de;
+    }
+
+    /* ─── Leaflet overrides ─── */
+    .oil-tip {
+      background: rgba(10, 15, 26, 0.95) !important;
+      border: 1px solid #1b2336 !important;
+      color: #e8edf5 !important;
+      font-size: 11px !important;
+      border-radius: 6px !important;
+      padding: 6px 10px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+    }
+    .oil-tip::before {
+      display: none !important;
+    }
+
+    .leaflet-control-zoom {
+      border: 1px solid #1b2336 !important;
+      border-radius: 6px !important;
+      overflow: hidden;
+    }
+    .leaflet-control-zoom-in,
+    .leaflet-control-zoom-out {
+      background: #0e1420 !important;
+      color: #e8edf5 !important;
+      border-bottom: 1px solid #1b2336 !important;
+      transition: 0.1s;
+    }
+    .leaflet-control-zoom-in:hover,
+    .leaflet-control-zoom-out:hover {
+      background: #1b2336 !important;
+      color: #fff !important;
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(10, 15, 26, 0.8) !important;
+      color: #6a7f9a !important;
+      font-size: 9px !important;
+      backdrop-filter: blur(4px);
+    }
+    .leaflet-control-attribution a {
+      color: #4d8fd9 !important;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        min-width: auto;
+        max-height: 45vh;
+        border-right: none;
+        border-bottom: 1px solid #1b2336;
+      }
+      .body {
+        flex-direction: column;
+      }
+      .map-area {
+        flex: 1;
+        min-height: 55vh;
+      }
+      .info-bar {
+        font-size: 9px;
+        gap: 10px;
+        padding: 4px 14px;
+      }
+      .detail-card {
+        width: 220px;
+        right: 8px;
+        top: 60px;
+        padding: 12px;
+      }
+      .h-pill {
+        font-size: 9px;
+        padding: 2px 10px;
+      }
+      .header-team {
+        display: none;
+      }
+      .h-right {
+        gap: 8px;
+      }
+      header {
+        padding: 0 12px;
+        height: 52px;
+      }
+      .h-title {
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .date-duo {
+        grid-template-columns: 1fr;
+      }
+      .action-row {
+        grid-template-columns: 1fr;
+      }
+      .detail-card {
+        width: calc(100% - 16px);
+        right: 8px;
+        top: 60px;
+        max-height: 50vh;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo">
-    <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'">
-  </div>
-  <div>
-    <div class="h-title">NARSS Oil Spill Monitoring Portal</div>
-  </div>
-  <div class="h-pills">
-    <div class="h-pill"><span class="conn-dot" id="conn-dot"></span><span class="conn-label" id="conn-label">connecting…</span></div>
-    <div class="h-pill">
-      <span class="h-pill-v" id="stat-count">0</span>
-      <span class="h-pill-l">records shown</span>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
     </div>
-    <div class="h-pill">
-      <span class="h-pill-v" id="stat-area">0 km²</span>
-      <span class="h-pill-l">total area</span>
+    <div>
+      <span class="h-title">NARSS Oil Spill Monitoring</span>
+      <span class="h-sub">| Real‑time GIS</span>
     </div>
-    <div class="header-team">
-      <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'">
-      <span>Team: NARSS</span>
+    <div class="h-right">
+      <div class="h-pill">
+        <span class="conn-dot" id="conn-dot"></span>
+        <span id="conn-label">connecting…</span>
+      </div>
+      <div class="h-pill">
+        <strong id="stat-count">0</strong> spills
+      </div>
+      <div class="h-pill">
+        <strong id="stat-area">0 km²</strong> total
+      </div>
+      <div class="header-team">
+        <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
+        <span>Team: NARSS</span>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<div class="body">
+  <div class="body">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <!-- FILTERS -->
-    <div class="filter-wrap">
-      <div class="sec-title">🔍 Filter by Date (optional)</div>
+      <!-- FILTERS -->
+      <div class="filter-wrap">
+        <div class="sec-title"><span>📅</span> Date Range</div>
 
-      <div class="field">
-        <label class="fl">Date Range</label>
-        <div class="date-duo">
-          <div>
-            <label class="fl">From</label>
-            <input type="date" id="f-from" value="2014-01-01">
+        <div class="field">
+          <div class="date-duo">
+            <div>
+              <label class="fl">From</label>
+              <input type="date" id="f-from" value="2014-01-01" />
+            </div>
+            <div>
+              <label class="fl">To</label>
+              <input type="date" id="f-to" value="2024-12-31" />
+            </div>
           </div>
-          <div>
-            <label class="fl">To</label>
-            <input type="date" id="f-to" value="2024-12-31">
+        </div>
+
+        <div class="action-row">
+          <button class="btn-apply" id="btn-apply" onclick="applyFilters()">Apply Filters</button>
+          <button class="btn-reset" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <div class="hint">
+          💡 Leave dates empty to show <strong>all</strong> spills.
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-panel">
+        <div class="results-bar">
+          <span class="sec-title" style="margin:0;"><span>📂</span> Shapefiles</span>
+          <span class="r-badge" id="r-badge">— records</span>
+        </div>
+        <div class="results-list" id="results-list">
+          <div class="empty">
+            <div class="empty-icon">🗺️</div>
+            <div class="empty-msg">Connecting to server…</div>
           </div>
         </div>
       </div>
 
-      <div class="action-row">
-        <button class="btn-apply" id="btn-apply" onclick="applyFilters()">Show Spills</button>
-        <button class="btn-reset" onclick="resetFilters()">Reset</button>
+    </aside>
+
+    <!-- MAP AREA -->
+    <div class="map-area">
+
+      <!-- info bar -->
+      <div class="info-bar" id="info-bar">
+        <span>Showing <strong id="ib-count">0</strong> spills</span>
+        <span class="sep"></span>
+        <span>Total area <strong id="ib-area">0 km²</strong></span>
+        <span class="sep"></span>
+        <span>Click a polygon for details</span>
       </div>
 
-      <div class="hint">Leave dates empty to show <strong>all</strong> spills. Pick a range to narrow down.</div>
-    </div>
-
-    <!-- RESULTS -->
-    <div class="results-panel">
-      <div class="results-bar">
-        <span class="sec-title" style="margin:0">📂 Shapefiles</span>
-        <span class="r-badge" id="r-badge">— records</span>
+      <!-- detail card -->
+      <div class="detail-card" id="detail-card">
+        <div class="dc-hd">
+          <div class="dc-title" id="dc-title">—</div>
+          <button class="dc-close" onclick="closeDetail()">×</button>
+        </div>
+        <div class="dc-sep"></div>
+        <div id="dc-body"></div>
+        <button class="btn-zoom" id="dc-zoom">⊕ Zoom to spill</button>
       </div>
-      <div class="results-list" id="results-list">
-        <div class="empty">
-          <div class="empty-icon">🗺️</div>
-          <div class="empty-msg">Connecting to database…</div>
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-title">Oil Spill Areas</div>
+        <div class="legend-item">
+          <span class="legend-color active"></span>
+          <span class="legend-text">Active / Monitored</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color historical"></span>
+          <span class="legend-text">Historical</span>
         </div>
       </div>
+
+      <div id="map"></div>
+
     </div>
-
-  </aside>
-
-  <!-- MAP AREA -->
-  <div class="map-area">
-
-    <!-- top info bar -->
-    <div class="info-bar" id="info-bar">
-      <span class="ib-stat">Showing <strong id="ib-count">0</strong> spills</span>
-      <span class="ib-sep"></span>
-      <span class="ib-stat">Total area <strong id="ib-area">0 km²</strong></span>
-      <span class="ib-sep"></span>
-      <span class="ib-stat">Click a polygon for details</span>
-    </div>
-
-    <!-- detail card -->
-    <div class="detail-card" id="detail-card">
-      <div class="dc-hd">
-        <div class="dc-title" id="dc-title">—</div>
-        <button class="dc-close" onclick="closeDetail()">×</button>
-      </div>
-      <div class="dc-sep"></div>
-      <div id="dc-body"></div>
-      <button class="btn-zoom" id="dc-zoom">⊕ Zoom to this spill</button>
-    </div>
-
-    <!-- LEGEND -->
-    <div class="legend">
-      <div class="legend-title">Oil Spill Areas</div>
-      <div class="legend-item">
-        <span class="legend-color active"></span>
-        <span class="legend-text">Active / Monitored</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-color historical"></span>
-        <span class="legend-text">Historical</span>
-      </div>
-    </div>
-
-    <div id="map"></div>
-
   </div>
-</div>
 
-<!-- ===================================================================
-     SCRIPTS
-==================================================================== -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-// =====================================================================
-//  CONFIG
-// =====================================================================
-const API_BASE = "/api";
+  <!-- ============================================================
+       SCRIPTS
+  ============================================================ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+  </script>
+  <script>
+    // ─── Configuration ────────────────────────────────────────────────
+    const API_BASE = "/api";
 
-// ─────────────────────────────────────────────────────────────
-// MAP INITIALISATION
-// ─────────────────────────────────────────────────────────────
-const map = L.map('map', { center: [22, 47], zoom: 4, zoomControl: true });
+    // ─── Map initialization ──────────────────────────────────────────
+    const map = L.map('map', {
+      center: [22, 47],
+      zoom: 4,
+      zoomControl: false,
+    });
 
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
-  maxZoom: 19
-}).addTo(map);
+    // Custom zoom control (clean)
+    L.control.zoom({
+      position: 'bottomleft'
+    }).addTo(map);
 
-// ─────────────────────────────────────────────────────────────
-// CONSTANTS & STATE
-// ─────────────────────────────────────────────────────────────
-let layers    = {};
-let selId     = null;
-let lastRecords = [];
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+      maxZoom: 19,
+    }).addTo(map);
 
-// ─────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────
-const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
+    // ─── State ────────────────────────────────────────────────────────
+    let layers = {};
+    let selId = null;
+    let lastRecords = [];
 
-function fmtDate(d) {
-  const [y,m,day] = d.split('-');
-  return `${parseInt(day)} ${MONTHS[parseInt(m)-1]} ${y}`;
-}
+    // ─── Helpers ──────────────────────────────────────────────────────
+    const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
-function fmtArea(a) {
-  if (a == null) return '—';
-  return a >= 1000 ? (a/1000).toFixed(1)+' k km²' : Math.round(a)+' km²';
-}
+    function fmtDate(d) {
+      if (!d) return '—';
+      const [y, m, day] = d.split('-');
+      return `${parseInt(day)} ${MONTHS[parseInt(m) - 1]} ${y}`;
+    }
 
-function setConn(ok, label) {
-  const dot = document.getElementById('conn-dot');
-  dot.className = 'conn-dot ' + (ok ? 'ok' : 'bad');
-  document.getElementById('conn-label').textContent = label;
-}
+    function fmtArea(a) {
+      if (a == null) return '—';
+      return a >= 1000 ? (a / 1000).toFixed(1) + ' k km²' : Math.round(a) + ' km²';
+    }
 
-// ─────────────────────────────────────────────────────────────
-// FILTER LOGIC
-// ─────────────────────────────────────────────────────────────
-async function applyFilters() {
-  const from = document.getElementById('f-from').value;
-  const to   = document.getElementById('f-to').value;
+    function setConn(ok, label) {
+      const dot = document.getElementById('conn-dot');
+      dot.className = 'conn-dot ' + (ok ? 'ok' : 'bad');
+      document.getElementById('conn-label').textContent = label;
+    }
 
-  const btn = document.getElementById('btn-apply');
-  btn.disabled = true; btn.textContent = 'Loading…';
+    // ─── Filter logic ──────────────────────────────────────────────────
+    async function applyFilters() {
+      const from = document.getElementById('f-from').value;
+      const to = document.getElementById('f-to').value;
 
-  const params = new URLSearchParams();
-  if (from) params.set('date_from', from);
-  if (to) params.set('date_to', to);
+      const btn = document.getElementById('btn-apply');
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
 
-  try {
-    const res = await fetch(`${API_BASE}/spills?${params.toString()}`);
-    if (!res.ok) throw new Error(`Server responded ${res.status}`);
-    const records = await res.json();
+      const params = new URLSearchParams();
+      if (from) params.set('date_from', from);
+      if (to) params.set('date_to', to);
 
-    lastRecords = records;
-    setConn(true, 'connected');
-    renderList(records);
-    renderMap(records);
-  } catch (err) {
-    setConn(false, 'offline');
-    renderError(err);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Show Spills';
-  }
-}
-
-function resetFilters() {
-  document.getElementById('f-from').value = '2014-01-01';
-  document.getElementById('f-to').value = '2024-12-31';
-  closeDetail();
-  applyFilters();
-}
-
-// ─────────────────────────────────────────────────────────────
-// RENDER: ERROR STATE
-// ─────────────────────────────────────────────────────────────
-function renderError(err) {
-  document.getElementById('r-badge').textContent = 'offline';
-  document.getElementById('stat-count').textContent = '—';
-  document.getElementById('stat-area').textContent = '—';
-  document.getElementById('info-bar').style.display = 'none';
-  document.getElementById('results-list').innerHTML = `
-    <div class="empty">
-      <div class="empty-icon">⚠️</div>
-      <div class="empty-msg err">Couldn't reach the backend at<br><code>${API_BASE}</code><br><br>Is the server running?</div>
-    </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────
-// RENDER RESULTS LIST
-// ─────────────────────────────────────────────────────────────
-function renderList(records) {
-  const totalArea = records.reduce((s,r) => s + (r.area_km2 || 0), 0);
-
-  document.getElementById('r-badge').textContent    = `${records.length} records`;
-  document.getElementById('stat-count').textContent = records.length;
-  document.getElementById('stat-area').textContent  = fmtArea(totalArea);
-
-  const bar = document.getElementById('info-bar');
-  if (records.length > 0) {
-    document.getElementById('ib-count').textContent = records.length;
-    document.getElementById('ib-area').textContent  = fmtArea(totalArea);
-    bar.style.display = 'flex';
-  } else {
-    bar.style.display = 'none';
-  }
-
-  const list = document.getElementById('results-list');
-  if (records.length === 0) {
-    list.innerHTML = `<div class="empty">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-msg">No shapefiles in the database for that date range.<br>Try adjusting the filters.</div>
-    </div>`;
-    return;
-  }
-
-  list.innerHTML = records.map(s => `
-    <div class="spill-card" id="card-${s.id}" onclick="selectSpill('${s.id}')">
-      <span class="c-id">${s.id}</span>
-      <div class="c-name">${s.name}</div>
-      <div class="c-meta">
-        ${s.region ? `<span>📍 ${s.region}</span>` : ''}
-        <span>📅 ${fmtDate(s.spill_date)}</span>
-        <span>📐 ${fmtArea(s.area_km2)}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ─────────────────────────────────────────────────────────────
-// RENDER MAP LAYERS
-// ─────────────────────────────────────────────────────────────
-function renderMap(records) {
-  Object.values(layers).forEach(l => map.removeLayer(l));
-  layers = {};
-
-  if (records.length === 0) return;
-
-  const bounds = L.latLngBounds([]);
-
-  records.forEach(s => {
-    const layer = L.geoJSON({type:'Feature', geometry:s.geometry}, {
-      style:{
-        color:'#059669',
-        weight:1.5,
-        fillColor:'#10b981',
-        fillOpacity:0.4,
-        opacity:0.85
+      try {
+        const res = await fetch(`${API_BASE}/spills?${params.toString()}`);
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        const records = await res.json();
+        lastRecords = records;
+        setConn(true, 'connected');
+        renderList(records);
+        renderMap(records);
+      } catch (err) {
+        setConn(false, 'offline');
+        renderError(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Apply Filters';
       }
-    })
-    .bindTooltip(
-      `<strong>${s.name}</strong><br>
-       ${s.region ? s.region + ' &middot; ' : ''}${fmtDate(s.spill_date)} &middot; ${fmtArea(s.area_km2)}`,
-      {sticky:true, className:'oil-tip'}
-    )
-    .on('click', () => selectSpill(s.id))
-    .addTo(map);
+    }
 
-    layers[s.id] = layer;
-    bounds.extend(layer.getBounds());
-  });
+    function resetFilters() {
+      document.getElementById('f-from').value = '2014-01-01';
+      document.getElementById('f-to').value = '2024-12-31';
+      closeDetail();
+      applyFilters();
+    }
 
-  if (bounds.isValid()) {
-    map.fitBounds(bounds, {padding:[50,50], maxZoom:10});
-  }
-}
+    // ─── Render: Error ──────────────────────────────────────────────────
+    function renderError(err) {
+      document.getElementById('r-badge').textContent = 'offline';
+      document.getElementById('stat-count').textContent = '—';
+      document.getElementById('stat-area').textContent = '—';
+      document.getElementById('info-bar').style.display = 'none';
+      document.getElementById('results-list').innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-msg err">
+            Couldn't reach the backend at <code>${API_BASE}</code><br /><br />
+            ${err.message || 'Is the server running?'}
+          </div>
+        </div>`;
+    }
 
-// ─────────────────────────────────────────────────────────────
-// SELECT / HIGHLIGHT
-// ─────────────────────────────────────────────────────────────
-function selectSpill(id) {
-  if (selId) {
-    document.getElementById(`card-${selId}`)?.classList.remove('sel');
-    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.4, weight:1.5});
-  }
+    // ─── Render: List ──────────────────────────────────────────────────
+    function renderList(records) {
+      const totalArea = records.reduce((s, r) => s + (r.area_km2 || 0), 0);
 
-  selId = id;
-  const card = document.getElementById(`card-${id}`);
-  if (card) { card.classList.add('sel'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+      document.getElementById('r-badge').textContent = `${records.length} records`;
+      document.getElementById('stat-count').textContent = records.length;
+      document.getElementById('stat-area').textContent = fmtArea(totalArea);
 
-  const layer = layers[id];
-  if (layer) { layer.setStyle({fillOpacity:0.7, weight:2.5}); layer.bringToFront(); }
+      const bar = document.getElementById('info-bar');
+      if (records.length > 0) {
+        document.getElementById('ib-count').textContent = records.length;
+        document.getElementById('ib-area').textContent = fmtArea(totalArea);
+        bar.style.display = 'flex';
+      } else {
+        bar.style.display = 'none';
+      }
 
-  const s = lastRecords.find(x => x.id === id);
-  if (s) showDetail(s);
-}
+      const list = document.getElementById('results-list');
+      if (records.length === 0) {
+        list.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-msg">No shapefiles found for this date range.<br />Try adjusting the filters.</div>
+          </div>`;
+        return;
+      }
 
-// ─────────────────────────────────────────────────────────────
-// DETAIL PANEL
-// ─────────────────────────────────────────────────────────────
-function showDetail(s) {
-  document.getElementById('dc-title').textContent = s.name;
+      list.innerHTML = records.map(s => `
+        <div class="spill-card" id="card-${s.id}" onclick="selectSpill('${s.id}')">
+          <span class="c-id">${s.id}</span>
+          <div class="c-name">${s.name}</div>
+          <div class="c-meta">
+            ${s.region ? `<span>📍 ${s.region}</span>` : ''}
+            <span>📅 ${fmtDate(s.spill_date)}</span>
+            <span>📐 ${fmtArea(s.area_km2)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
 
-  document.getElementById('dc-body').innerHTML = `
-    <div class="dc-row"><span class="dc-l">ID</span>       <span class="dc-v blue">${s.id}</span></div>
-    ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span>   <span class="dc-v">${s.region}</span></div>` : ''}
-    <div class="dc-row"><span class="dc-l">Date</span>     <span class="dc-v">${fmtDate(s.spill_date)}</span></div>
-    <div class="dc-row"><span class="dc-l">Area</span>     <span class="dc-v">${fmtArea(s.area_km2)}</span></div>
-    ${s.source ? `<div class="dc-row"><span class="dc-l">Source</span>   <span class="dc-v">${s.source}</span></div>` : ''}
-    ${s.vessel ? `<div class="dc-row"><span class="dc-l">Vessel</span>   <span class="dc-v">${s.vessel}</span></div>` : ''}
-    ${s.oil_type ? `<div class="dc-row"><span class="dc-l">Oil type</span> <span class="dc-v">${s.oil_type}</span></div>` : ''}
-    ${s.shapefile_name ? `<div class="dc-row"><span class="dc-l">File</span>     <span class="dc-v mono">${s.shapefile_name}</span></div>` : ''}
-  `;
+    // ─── Render: Map ────────────────────────────────────────────────────
+    function renderMap(records) {
+      Object.values(layers).forEach(l => map.removeLayer(l));
+      layers = {};
 
-  document.getElementById('dc-zoom').onclick = () => {
-    const l = layers[s.id];
-    if (l && l.getBounds) map.fitBounds(l.getBounds(), {padding:[80,80]});
-  };
+      if (records.length === 0) return;
 
-  document.getElementById('detail-card').classList.add('show');
-}
+      const bounds = L.latLngBounds([]);
 
-function closeDetail() {
-  document.getElementById('detail-card').classList.remove('show');
-  if (selId) {
-    document.getElementById(`card-${selId}`)?.classList.remove('sel');
-    if (layers[selId]) layers[selId].setStyle({fillOpacity:0.4, weight:1.5});
-    selId = null;
-  }
-}
+      records.forEach(s => {
+        const layer = L.geoJSON({
+          type: 'Feature',
+          geometry: s.geometry
+        }, {
+          style: {
+            color: '#059669',
+            weight: 1.5,
+            fillColor: '#10b981',
+            fillOpacity: 0.4,
+            opacity: 0.85,
+          }
+        })
+          .bindTooltip(
+            `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}`,
+            { sticky: true, className: 'oil-tip' }
+          )
+          .on('click', () => selectSpill(s.id))
+          .addTo(map);
 
-// ─────────────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────────────
-applyFilters();
-</script>
+        layers[s.id] = layer;
+        bounds.extend(layer.getBounds());
+      });
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
+      }
+    }
+
+    // ─── Selection ──────────────────────────────────────────────────────
+    function selectSpill(id) {
+      // Deselect previous
+      if (selId) {
+        document.getElementById(`card-${selId}`)?.classList.remove('sel');
+        if (layers[selId]) {
+          layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+        }
+      }
+
+      selId = id;
+
+      // Highlight card
+      const card = document.getElementById(`card-${id}`);
+      if (card) {
+        card.classList.add('sel');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Highlight layer
+      const layer = layers[id];
+      if (layer) {
+        layer.setStyle({ fillOpacity: 0.7, weight: 2.5 });
+        layer.bringToFront();
+      }
+
+      // Show detail
+      const s = lastRecords.find(x => x.id === id);
+      if (s) showDetail(s);
+    }
+
+    // ─── Detail panel ──────────────────────────────────────────────────
+    function showDetail(s) {
+      document.getElementById('dc-title').textContent = s.name;
+
+      document.getElementById('dc-body').innerHTML = `
+        <div class="dc-row"><span class="dc-l">ID</span><span class="dc-v blue">${s.id}</span></div>
+        ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span><span class="dc-v">${s.region}</span></div>` : ''}
+        <div class="dc-row"><span class="dc-l">Date</span><span class="dc-v">${fmtDate(s.spill_date)}</span></div>
+        <div class="dc-row"><span class="dc-l">Area</span><span class="dc-v">${fmtArea(s.area_km2)}</span></div>
+        ${s.source ? `<div class="dc-row"><span class="dc-l">Source</span><span class="dc-v">${s.source}</span></div>` : ''}
+        ${s.vessel ? `<div class="dc-row"><span class="dc-l">Vessel</span><span class="dc-v">${s.vessel}</span></div>` : ''}
+        ${s.oil_type ? `<div class="dc-row"><span class="dc-l">Oil type</span><span class="dc-v">${s.oil_type}</span></div>` : ''}
+        ${s.shapefile_name ? `<div class="dc-row"><span class="dc-l">File</span><span class="dc-v mono">${s.shapefile_name}</span></div>` : ''}
+      `;
+
+      document.getElementById('dc-zoom').onclick = () => {
+        const l = layers[s.id];
+        if (l && l.getBounds) {
+          map.fitBounds(l.getBounds(), { padding: [80, 80] });
+        }
+      };
+
+      document.getElementById('detail-card').classList.add('show');
+    }
+
+    function closeDetail() {
+      document.getElementById('detail-card').classList.remove('show');
+      if (selId) {
+        document.getElementById(`card-${selId}`)?.classList.remove('sel');
+        if (layers[selId]) {
+          layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+        }
+        selId = null;
+      }
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────────
+    applyFilters();
+  </script>
 </body>
 </html>
