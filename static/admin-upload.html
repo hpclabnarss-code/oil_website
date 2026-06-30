@@ -1,156 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oil Spill Admin — Upload Shapefiles</title>
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#090c12;color:#c8d3df;min-height:100vh;
-}
-header{
-  background:#0e1420;border-bottom:1px solid #1b2336;
-  padding:0 22px;height:54px;display:flex;align-items:center;gap:12px;
-}
-.logo{
-  width:30px;height:30px;background:#7c1d1d;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
-}
-.h-title{font-size:14px;font-weight:700;color:#f0f4f8;}
-.h-sub{font-size:10px;color:#3d5068;margin-top:1px;}
-.h-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.conn-dot{width:6px;height:6px;border-radius:50%;background:#3d5068;}
-.conn-dot.ok{background:#16a34a;}
-.conn-dot.bad{background:#dc2626;}
-.conn-label{font-size:10px;color:#3d5068;}
-.btn-logout{
-  background:transparent;border:1px solid #1b2336;color:#7a9ab8;
-  border-radius:5px;padding:6px 13px;font-size:11px;cursor:pointer;
-}
-.btn-logout:hover{background:#131c2b;}
-.header-team{
-  color:#2c3f57;font-size:9px;letter-spacing:.05em;
-  display:flex;align-items:center;gap:6px;
-}
-.header-team img{height:24px;width:auto;border-radius:4px;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oil Spill Admin — Upload Shapefiles</title>
+  <style>
+    /* ... (same as before, unchanged) ... */
+    /* I'll include the full style again for completeness */
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      background:#090c12;color:#c8d3df;min-height:100vh;
+    }
+    header{
+      background:#0e1420;border-bottom:1px solid #1b2336;
+      padding:0 22px;height:54px;display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:30px;height:30px;background:#7c1d1d;border-radius:6px;
+      display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+    }
+    .h-title{font-size:14px;font-weight:700;color:#f0f4f8;}
+    .h-sub{font-size:10px;color:#3d5068;margin-top:1px;}
+    .h-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+    .conn-dot{width:6px;height:6px;border-radius:50%;background:#3d5068;}
+    .conn-dot.ok{background:#16a34a;}
+    .conn-dot.bad{background:#dc2626;}
+    .conn-label{font-size:10px;color:#3d5068;}
+    .btn-logout{
+      background:transparent;border:1px solid #1b2336;color:#7a9ab8;
+      border-radius:5px;padding:6px 13px;font-size:11px;cursor:pointer;
+    }
+    .btn-logout:hover{background:#131c2b;}
+    .header-team{
+      color:#2c3f57;font-size:9px;letter-spacing:.05em;
+      display:flex;align-items:center;gap:6px;
+    }
+    .header-team img{height:24px;width:auto;border-radius:4px;}
 
-.login-wrap{
-  max-width:360px;margin:90px auto 0;background:#0e1420;
-  border:1px solid #1b2336;border-radius:10px;padding:30px 28px;
-}
-.login-icon{font-size:28px;text-align:center;margin-bottom:6px;}
-.login-title{font-size:15px;font-weight:700;color:#f0f4f8;text-align:center;margin-bottom:3px;}
-.login-sub{font-size:11px;color:#3d5068;text-align:center;margin-bottom:22px;}
-.field{margin-bottom:13px;}
-.fl{font-size:10px;color:#4a6380;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
-input[type=text],input[type=password],input[type=date],select,textarea{
-  width:100%;background:#090c12;border:1px solid #1b2336;
-  color:#d8e4f0;border-radius:6px;padding:9px 11px;font-size:12px;outline:none;
-  font-family:inherit;
-}
-input:focus,select:focus,textarea:focus{border-color:#2a5aac;}
-select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6380'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 11px center;
-  padding-right:26px;-webkit-appearance:none;appearance:none;
-}
-.btn-primary{
-  width:100%;padding:10px;background:#1a3c8f;color:#fff;border:none;
-  border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;
-}
-.btn-primary:hover{background:#2554c7;}
-.btn-primary:disabled{background:#1b2336;color:#3d5068;cursor:default;}
-.err-msg{
-  background:#1f0606;border:1px solid #5b1414;color:#fca5a5;
-  border-radius:5px;padding:8px 11px;font-size:11px;margin-bottom:13px;display:none;
-}
-.err-msg.show{display:block;}
-.hint-small{font-size:10px;color:#2c3f57;margin-top:14px;text-align:center;line-height:1.5;}
+    .login-wrap{
+      max-width:360px;margin:90px auto 0;background:#0e1420;
+      border:1px solid #1b2336;border-radius:10px;padding:30px 28px;
+    }
+    .login-icon{font-size:28px;text-align:center;margin-bottom:6px;}
+    .login-title{font-size:15px;font-weight:700;color:#f0f4f8;text-align:center;margin-bottom:3px;}
+    .login-sub{font-size:11px;color:#3d5068;text-align:center;margin-bottom:22px;}
+    .field{margin-bottom:13px;}
+    .fl{font-size:10px;color:#4a6380;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+    input[type=text],input[type=password],input[type=date],select,textarea{
+      width:100%;background:#090c12;border:1px solid #1b2336;
+      color:#d8e4f0;border-radius:6px;padding:9px 11px;font-size:12px;outline:none;
+      font-family:inherit;
+    }
+    input:focus,select:focus,textarea:focus{border-color:#2a5aac;}
+    select{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6380'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 11px center;
+      padding-right:26px;-webkit-appearance:none;appearance:none;
+    }
+    .btn-primary{
+      width:100%;padding:10px;background:#1a3c8f;color:#fff;border:none;
+      border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;
+    }
+    .btn-primary:hover{background:#2554c7;}
+    .btn-primary:disabled{background:#1b2336;color:#3d5068;cursor:default;}
+    .err-msg{
+      background:#1f0606;border:1px solid #5b1414;color:#fca5a5;
+      border-radius:5px;padding:8px 11px;font-size:11px;margin-bottom:13px;display:none;
+    }
+    .err-msg.show{display:block;}
+    .hint-small{font-size:10px;color:#2c3f57;margin-top:14px;text-align:center;line-height:1.5;}
 
-.dash{display:none;max-width:1100px;margin:0 auto;padding:26px 24px 60px;}
-.dash.show{display:block;}
-.grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start;}
-@media (max-width:880px){.grid{grid-template-columns:1fr;}}
+    .dash{display:none;max-width:1100px;margin:0 auto;padding:26px 24px 60px;}
+    .dash.show{display:block;}
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start;}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}}
 
-.panel{background:#0e1420;border:1px solid #1b2336;border-radius:10px;padding:20px;}
-.panel-title{font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:3px;}
-.panel-sub{font-size:10.5px;color:#3d5068;margin-bottom:18px;line-height:1.5;}
+    .panel{background:#0e1420;border:1px solid #1b2336;border-radius:10px;padding:20px;}
+    .panel-title{font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:3px;}
+    .panel-sub{font-size:10.5px;color:#3d5068;margin-bottom:18px;line-height:1.5;}
 
-.dropzone{
-  border:1.5px dashed #1b2336;border-radius:8px;padding:16px 14px;
-  text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
-  margin-bottom:12px;min-height:90px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.dropzone:hover,.dropzone.drag{border-color:#2a5aac;background:#0a1828;}
-.dropzone.has-files{border-color:#15803d;background:#031a0f;}
-.dropzone .dz-icon{font-size:22px;margin-bottom:4px;}
-.dropzone .dz-text{font-size:11.5px;color:#7a9ab8;}
-.dropzone .dz-sub{font-size:9.5px;color:#2c3f57;margin-top:2px;}
+    .dropzone{
+      border:1.5px dashed #1b2336;border-radius:8px;padding:16px 14px;
+      text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
+      margin-bottom:12px;min-height:90px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    .dropzone:hover,.dropzone.drag{border-color:#2a5aac;background:#0a1828;}
+    .dropzone.has-files{border-color:#15803d;background:#031a0f;}
+    .dropzone .dz-icon{font-size:22px;margin-bottom:4px;}
+    .dropzone .dz-text{font-size:11.5px;color:#7a9ab8;}
+    .dropzone .dz-sub{font-size:9.5px;color:#2c3f57;margin-top:2px;}
 
-.file-list{width:100%;margin-top:8px;max-height:150px;overflow-y:auto;text-align:left;}
-.file-item{
-  display:flex;align-items:center;justify-content:space-between;
-  background:#0a0f1a;border-radius:4px;padding:4px 8px 4px 12px;
-  margin-bottom:4px;font-size:11px;border:1px solid #151f30;
-}
-.file-item .fname{
-  font-family:monospace;font-size:10.5px;color:#86efac;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;
-}
-.file-item .fstatus{font-size:9px;color:#3d5068;margin-left:8px;flex-shrink:0;}
-.file-item .fstatus.ok{color:#86efac;}
-.file-item .fstatus.err{color:#fca5a5;}
-.file-item .fstatus.uploading{color:#fbbf24;}
-.file-item .fstatus.skipped{color:#facc15;}
-.file-item .fremove{
-  background:transparent;border:none;color:#7a9ab8;cursor:pointer;
-  font-size:14px;line-height:1;padding:0 4px;flex-shrink:0;
-}
-.file-item .fremove:hover{color:#fca5a5;}
-.file-item .fremove:disabled{opacity:.3;cursor:default;}
+    .file-list{width:100%;margin-top:8px;max-height:150px;overflow-y:auto;text-align:left;}
+    .file-item{
+      display:flex;align-items:center;justify-content:space-between;
+      background:#0a0f1a;border-radius:4px;padding:4px 8px 4px 12px;
+      margin-bottom:4px;font-size:11px;border:1px solid #151f30;
+    }
+    .file-item .fname{
+      font-family:monospace;font-size:10.5px;color:#86efac;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;
+    }
+    .file-item .fstatus{font-size:9px;color:#3d5068;margin-left:8px;flex-shrink:0;}
+    .file-item .fstatus.ok{color:#86efac;}
+    .file-item .fstatus.err{color:#fca5a5;}
+    .file-item .fstatus.uploading{color:#fbbf24;}
+    .file-item .fstatus.skipped{color:#facc15;}
+    .file-item .fremove{
+      background:transparent;border:none;color:#7a9ab8;cursor:pointer;
+      font-size:14px;line-height:1;padding:0 4px;flex-shrink:0;
+    }
+    .file-item .fremove:hover{color:#fca5a5;}
+    .file-item .fremove:disabled{opacity:.3;cursor:default;}
 
-.field-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.form-msg{
-  border-radius:6px;padding:9px 11px;font-size:11px;margin-top:14px;display:none;line-height:1.5;
-}
-.form-msg.show{display:block;}
-.form-msg.success{background:#031a0f;border:1px solid #15803d;color:#86efac;}
-.form-msg.error{background:#1f0606;border:1px solid #5b1414;color:#fca5a5;}
-.form-msg.info{background:#0a1828;border:1px solid #1b3a6a;color:#93b8e8;}
+    .field-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .form-msg{
+      border-radius:6px;padding:9px 11px;font-size:11px;margin-top:14px;display:none;line-height:1.5;
+    }
+    .form-msg.show{display:block;}
+    .form-msg.success{background:#031a0f;border:1px solid #15803d;color:#86efac;}
+    .form-msg.error{background:#1f0606;border:1px solid #5b1414;color:#fca5a5;}
+    .form-msg.info{background:#0a1828;border:1px solid #1b3a6a;color:#93b8e8;}
 
-.batch-summary{font-size:10px;color:#3d5068;margin-top:8px;text-align:center;}
-.batch-summary strong{color:#b8c5d3;}
+    .batch-summary{font-size:10px;color:#3d5068;margin-top:8px;text-align:center;}
+    .batch-summary strong{color:#b8c5d3;}
 
-.rec-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.r-badge{background:#151f30;color:#3d5068;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;}
-.btn-refresh{background:transparent;border:1px solid #1b2336;color:#7a9ab8;border-radius:5px;padding:5px 11px;font-size:10.5px;cursor:pointer;}
-.btn-refresh:hover{background:#131c2b;}
+    .rec-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .r-badge{background:#151f30;color:#3d5068;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;}
+    .rec-actions{display:flex;gap:6px;align-items:center;}
+    .btn-refresh{
+      background:transparent;border:1px solid #1b2336;color:#7a9ab8;
+      border-radius:5px;padding:5px 11px;font-size:10.5px;cursor:pointer;
+    }
+    .btn-refresh:hover{background:#131c2b;}
+    .btn-delete-all{
+      background:#4a0e0e;border:1px solid #7a1a1a;color:#fca5a5;
+      border-radius:5px;padding:5px 11px;font-size:10.5px;cursor:pointer;
+      font-weight:600;
+    }
+    .btn-delete-all:hover{background:#5f1212;border-color:#a52222;}
 
-.rec-table{width:100%;border-collapse:collapse;}
-.rec-table th{
-  text-align:left;font-size:9px;color:#2c3f57;text-transform:uppercase;
-  letter-spacing:.07em;padding:0 10px 8px;border-bottom:1px solid #1b2336;font-weight:700;
-}
-.rec-table td{padding:9px 10px;font-size:11.5px;border-bottom:1px solid #11182a;color:#b8c5d3;}
-.rec-table tr:last-child td{border-bottom:none;}
-.rec-table tr:hover td{background:#0a0f1a;}
-.rec-id{font-family:monospace;font-size:9.5px;color:#2a5aac;}
-.row-actions{display:flex;gap:6px;}
-.icon-btn{
-  background:transparent;border:1px solid #1b2336;color:#7a9ab8;
-  border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;
-}
-.icon-btn:hover{background:#131c2b;}
-.icon-btn.danger{color:#e08080;}
-.icon-btn.danger:hover{background:#1f0606;border-color:#5b1414;}
-.empty-row td{text-align:center;padding:30px 10px;color:#2c3f57;font-size:11px;}
-</style>
+    .rec-table{width:100%;border-collapse:collapse;}
+    .rec-table th{
+      text-align:left;font-size:9px;color:#2c3f57;text-transform:uppercase;
+      letter-spacing:.07em;padding:0 10px 8px;border-bottom:1px solid #1b2336;font-weight:700;
+    }
+    .rec-table td{padding:9px 10px;font-size:11.5px;border-bottom:1px solid #11182a;color:#b8c5d3;}
+    .rec-table tr:last-child td{border-bottom:none;}
+    .rec-table tr:hover td{background:#0a0f1a;}
+    .rec-id{font-family:monospace;font-size:9.5px;color:#2a5aac;}
+    .row-actions{display:flex;gap:6px;}
+    .icon-btn{
+      background:transparent;border:1px solid #1b2336;color:#7a9ab8;
+      border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;
+    }
+    .icon-btn:hover{background:#131c2b;}
+    .icon-btn.danger{color:#e08080;}
+    .icon-btn.danger:hover{background:#1f0606;border-color:#5b1414;}
+    .empty-row td{text-align:center;padding:30px 10px;color:#2c3f57;font-size:11px;}
+  </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
   <div class="logo">🛢</div>
   <div>
@@ -168,6 +181,7 @@ select{
   </div>
 </header>
 
+<!-- LOGIN -->
 <div class="login-wrap" id="login-wrap">
   <div class="login-icon">🔒</div>
   <div class="login-title">Admin Login</div>
@@ -185,8 +199,11 @@ select{
   <div class="hint-small">Default dev credentials: admin / changeme123<br>(set ADMIN_USERNAME / ADMIN_PASSWORD on the server to change this)</div>
 </div>
 
+<!-- DASHBOARD -->
 <div class="dash" id="dash">
   <div class="grid">
+
+    <!-- UPLOAD PANEL -->
     <div class="panel">
       <div class="panel-title">📤 Upload Shapefiles</div>
       <div class="panel-sub">
@@ -208,7 +225,6 @@ select{
       </div>
       <div class="field">
         <label class="fl">Spill Date (optional – auto‑extracted from .dbf)</label>
-        <!-- DEFAULT DATE SET TO 2014-01-01 -->
         <input type="date" id="up-date" value="2014-01-01">
       </div>
       <div class="field-row2">
@@ -243,13 +259,17 @@ select{
       <div class="form-msg" id="upload-msg"></div>
     </div>
 
+    <!-- RECORDS PANEL (with Delete All button) -->
     <div class="panel">
       <div class="rec-bar">
         <div>
           <div class="panel-title" style="margin-bottom:2px">📂 Stored Shapefiles</div>
           <span class="r-badge" id="rec-badge">— records</span>
         </div>
-        <button class="btn-refresh" onclick="loadRecords()">↻ Refresh</button>
+        <div class="rec-actions">
+          <button class="btn-delete-all" id="btn-delete-all" onclick="deleteAllRecords()" title="Delete all records">🗑 Delete All</button>
+          <button class="btn-refresh" onclick="loadRecords()">↻ Refresh</button>
+        </div>
       </div>
       <div style="overflow-x:auto">
         <table class="rec-table">
@@ -258,16 +278,23 @@ select{
         </table>
       </div>
     </div>
+
   </div>
 </div>
 
 <script>
+// =====================================================================
+//  CONFIG
+// =====================================================================
 const API_BASE = "/api";
+
 let token = sessionStorage.getItem('admin_token') || null;
 let selectedFiles = [];
 let uploading = false;
 
-// ─── CONNECTION ───
+// ─────────────────────────────────────────────────────────────
+// CONNECTION INDICATOR
+// ─────────────────────────────────────────────────────────────
 async function checkConnection() {
   try {
     const res = await fetch(`${API_BASE}/health`);
@@ -281,7 +308,9 @@ function setConn(ok, label) {
   document.getElementById('conn-label').textContent = label;
 }
 
-// ─── AUTH ───
+// ─────────────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────────────
 async function login() {
   const username = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
@@ -335,7 +364,9 @@ function showDashboard() {
   updateBatchSummary();
 }
 
-// ─── FILE SELECTION ───
+// ─────────────────────────────────────────────────────────────
+// FILE SELECTION
+// ─────────────────────────────────────────────────────────────
 const dz = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 
@@ -416,7 +447,9 @@ function updateBatchSummary() {
     `<strong>${count}</strong> file${count > 1 ? 's' : ''} selected — click "Upload All Files" to send them`;
 }
 
-// ─── DUPLICATE DETECTION + UPLOAD ───
+// ─────────────────────────────────────────────────────────────
+// UPLOAD ALL FILES (with duplicate detection)
+// ─────────────────────────────────────────────────────────────
 async function uploadAllFiles() {
   const msg = document.getElementById('upload-msg');
   msg.className = 'form-msg';
@@ -437,7 +470,7 @@ async function uploadAllFiles() {
   btn.disabled = true;
   btn.textContent = 'Checking duplicates…';
 
-  // 1) Fetch existing records to get the list of used names
+  // Fetch existing records for duplicate check
   let existingNames = new Set();
   try {
     const res = await fetch(`${API_BASE}/admin/spills`, {
@@ -453,17 +486,12 @@ async function uploadAllFiles() {
       btn.disabled = false;
       btn.textContent = 'Upload All Files';
       return;
-    } else {
-      console.warn('Could not fetch records for duplicate check, proceeding anyway.');
     }
-  } catch (e) {
-    console.warn('Failed to fetch records for duplicate check:', e);
-  }
+  } catch (e) { /* ignore */ }
 
-  // 2) Determine candidate name for each file and filter duplicates
   const commonMeta = {
     name: document.getElementById('up-name').value.trim(),
-    date: document.getElementById('up-date').value, // now defaults to 2014-01-01
+    date: document.getElementById('up-date').value,
     region: document.getElementById('up-region').value.trim(),
     vessel: document.getElementById('up-vessel').value.trim(),
     oil_type: document.getElementById('up-oiltype').value.trim(),
@@ -475,10 +503,7 @@ async function uploadAllFiles() {
 
   for (let i = 0; i < selectedFiles.length; i++) {
     const file = selectedFiles[i];
-    let candidateName = commonMeta.name;
-    if (!candidateName) {
-      candidateName = file.name.replace(/\.[^.]+$/, '');
-    }
+    let candidateName = commonMeta.name || file.name.replace(/\.[^.]+$/, '');
     if (existingNames.has(candidateName)) {
       duplicateIndices.push(i);
       const statusEl = document.getElementById(`fstatus-${i}`);
@@ -499,7 +524,6 @@ async function uploadAllFiles() {
     return;
   }
 
-  // 3) Upload only unique files
   btn.textContent = `Uploading ${toUpload.length} file(s)...`;
   let successCount = 0, failCount = 0;
   const total = toUpload.length;
@@ -524,9 +548,6 @@ async function uploadAllFiles() {
       if (commonMeta.vessel) fd.append('vessel', commonMeta.vessel);
       if (commonMeta.oil_type) fd.append('oil_type', commonMeta.oil_type);
       fd.append('status', commonMeta.status);
-      // If your backend requires extra fields, add them here:
-      // fd.append('severity', '');
-      // fd.append('source', '');
 
       const res = await fetch(`${API_BASE}/admin/upload`, {
         method: 'POST',
@@ -597,7 +618,78 @@ function showUploadMsg(text, type) {
   msg.className = `form-msg show ${type}`;
 }
 
-// ─── RECORDS ───
+// ─────────────────────────────────────────────────────────────
+// DELETE ALL RECORDS
+// ─────────────────────────────────────────────────────────────
+async function deleteAllRecords() {
+  if (!token) {
+    alert('You are not logged in.');
+    return;
+  }
+
+  // First, fetch current records to get count
+  let records;
+  try {
+    const res = await fetch(`${API_BASE}/admin/spills`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Could not fetch records');
+    records = await res.json();
+  } catch (e) {
+    alert('Error fetching records: ' + e.message);
+    return;
+  }
+
+  if (records.length === 0) {
+    alert('No records to delete.');
+    return;
+  }
+
+  // Ask for confirmation
+  if (!confirm(`Are you sure you want to delete ALL ${records.length} records? This action cannot be undone.`)) {
+    return;
+  }
+
+  const btn = document.getElementById('btn-delete-all');
+  btn.disabled = true;
+  btn.textContent = `Deleting 0/${records.length}…`;
+
+  let deleted = 0;
+  let failed = 0;
+
+  for (const rec of records) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/spills/${rec.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        console.warn(`Failed to delete ${rec.id}: ${res.status}`);
+        failed++;
+      } else {
+        deleted++;
+      }
+      btn.textContent = `Deleting ${deleted + failed}/${records.length}…`;
+    } catch (e) {
+      console.warn(`Error deleting ${rec.id}:`, e);
+      failed++;
+    }
+  }
+
+  btn.textContent = `Done: ${deleted} deleted, ${failed} failed.`;
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '🗑 Delete All';
+  }, 3000);
+
+  // Refresh the list
+  await loadRecords();
+  // Also reset the duplicate cache if needed (the next upload will fetch fresh list)
+}
+
+// ─────────────────────────────────────────────────────────────
+// RECORDS TABLE
+// ─────────────────────────────────────────────────────────────
 async function loadRecords() {
   const tbody = document.getElementById('rec-tbody');
   tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
@@ -612,11 +704,14 @@ async function loadRecords() {
     if (res.status === 401) { logout(); return; }
     if (!res.ok) throw new Error('Failed to load records');
     const records = await res.json();
+
     document.getElementById('rec-badge').textContent = `${records.length} records`;
+
     if (records.length === 0) {
       tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No shapefiles uploaded yet.</td></tr>`;
       return;
     }
+
     tbody.innerHTML = records.map(r => `
       <tr>
         <td class="rec-id">${r.id}</td>
@@ -667,7 +762,9 @@ async function deleteRecord(id, name) {
   }
 }
 
-// ─── INIT ───
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
 checkConnection();
 if (token) {
   showDashboard();
