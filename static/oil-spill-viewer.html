@@ -494,54 +494,6 @@
       border-color: #2a5aac;
     }
 
-    /* ─── Legend ─── */
-    .legend {
-      position: absolute;
-      bottom: 30px;
-      right: 14px;
-      z-index: 500;
-      background: rgba(10, 15, 26, 0.92);
-      backdrop-filter: blur(4px);
-      border: 1px solid #1b2336;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 10px;
-      color: #b0c4de;
-      min-width: 110px;
-    }
-    .legend-title {
-      font-weight: 700;
-      color: #e8edf5;
-      margin-bottom: 6px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-    .legend-item:last-child {
-      margin-bottom: 0;
-    }
-    .legend-color {
-      display: inline-block;
-      width: 20px;
-      height: 3px;
-      border-radius: 3px;
-    }
-    .legend-color.active {
-      background: #10b981;
-      border: 1px solid #059669;
-    }
-    .legend-color.historical {
-      background: #059669;
-      border: 1px solid #10b981;
-      opacity: 0.6;
-    }
-    .legend-text {
-      color: #b0c4de;
-    }
-
     /* ─── Leaflet overrides ─── */
     .oil-tip {
       background: rgba(10, 15, 26, 0.95) !important;
@@ -688,11 +640,13 @@
           <div class="date-duo">
             <div>
               <label class="fl">From</label>
+              <!-- Default: 2014-01-01 -->
               <input type="date" id="f-from" value="2014-01-01" />
             </div>
             <div>
               <label class="fl">To</label>
-              <input type="date" id="f-to" value="2024-12-31" />
+              <!-- Default: 2014-12-31 (full year 2014) -->
+              <input type="date" id="f-to" value="2014-12-31" />
             </div>
           </div>
         </div>
@@ -746,18 +700,7 @@
         <button class="btn-zoom" id="dc-zoom">⊕ Zoom to spill</button>
       </div>
 
-      <!-- LEGEND -->
-      <div class="legend">
-        <div class="legend-title">Oil Spill Areas</div>
-        <div class="legend-item">
-          <span class="legend-color active"></span>
-          <span class="legend-text">Active / Monitored</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color historical"></span>
-          <span class="legend-text">Historical</span>
-        </div>
-      </div>
+      <!-- LEGEND – REMOVED as requested -->
 
       <div id="map"></div>
 
@@ -846,6 +789,7 @@
     }
 
     function resetFilters() {
+      // Reset to full year 2014
       document.getElementById('f-from').value = '2014-01-01';
       document.getElementById('f-to').value = '2014-12-31';
       closeDetail();
