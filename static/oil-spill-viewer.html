@@ -1,964 +1,1019 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NARSS Oil Spill Monitoring Portal</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <style>
-    /* ─── Reset & base ─── */
-    *,
-    *::before,
-    *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NARSS Oil Spill Monitoring Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        /* ─── Reset & base ─── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #090c12;
-      color: #e8edf5;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #090c12;
+            color: #e8edf5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    /* ─── Scrollbar ─── */
-    ::-webkit-scrollbar {
-      width: 4px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0e1420;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1b2336;
-      border-radius: 4px;
-    }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e1420;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1b2336;
+            border-radius: 4px;
+        }
 
-    /* ─── Header ─── */
-    header {
-      background: #0a0f1a;
-      border-bottom: 1px solid #1b2336;
-      padding: 0 24px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
-      z-index: 200;
-    }
+        /* ─── Header ─── */
+        header {
+            background: #0a0f1a;
+            border-bottom: 1px solid #1b2336;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            z-index: 200;
+        }
 
-    .logo {
-      height: 34px;
-      width: auto;
-      border-radius: 6px;
-      background: #151f30;
-      padding: 4px 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .logo img {
-      height: 28px;
-      width: auto;
-    }
+        .logo {
+            height: 34px;
+            width: auto;
+            border-radius: 6px;
+            background: #151f30;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo img {
+            height: 28px;
+            width: auto;
+        }
 
-    .h-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #f0f4f8;
-      letter-spacing: -0.01em;
-    }
-    .h-sub {
-      font-size: 11px;
-      color: #6a7f9a;
-      margin-left: 6px;
-    }
+        .h-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f0f4f8;
+            letter-spacing: -0.01em;
+        }
+        .h-sub {
+            font-size: 11px;
+            color: #6a7f9a;
+            margin-left: 6px;
+        }
 
-    .h-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+        .h-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-    .h-pill {
-      background: #0e1420;
-      border: 1px solid #1b2336;
-      border-radius: 100px;
-      padding: 4px 14px;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #b0c4de;
-    }
-    .h-pill strong {
-      color: #fff;
-      font-weight: 600;
-    }
+        .h-pill {
+            background: #0e1420;
+            border: 1px solid #1b2336;
+            border-radius: 100px;
+            padding: 4px 14px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #b0c4de;
+        }
+        .h-pill strong {
+            color: #fff;
+            font-weight: 600;
+        }
 
-    .conn-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #3d5068;
-      display: inline-block;
-    }
-    .conn-dot.ok {
-      background: #10b981;
-    }
-    .conn-dot.bad {
-      background: #ef4444;
-    }
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3d5068;
+            display: inline-block;
+        }
+        .conn-dot.ok {
+            background: #10b981;
+        }
+        .conn-dot.bad {
+            background: #ef4444;
+        }
 
-    .header-team {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 10px;
-      color: #6a7f9a;
-    }
-    .header-team img {
-      height: 26px;
-      width: auto;
-      border-radius: 4px;
-    }
+        .header-team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            color: #6a7f9a;
+        }
+        .header-team img {
+            height: 26px;
+            width: auto;
+            border-radius: 4px;
+        }
 
-    /* ─── Body ─── */
-    .body {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+        /* ─── Body ─── */
+        .body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
 
-    /* ─── Sidebar ─── */
-    .sidebar {
-      width: 300px;
-      min-width: 300px;
-      background: #0a0f1a;
-      border-right: 1px solid #1b2336;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        /* ─── Sidebar ─── */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: #0a0f1a;
+            border-right: 1px solid #1b2336;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    /* ─── Filter section ─── */
-    .filter-wrap {
-      padding: 16px 18px 12px;
-      border-bottom: 1px solid #1b2336;
-      flex-shrink: 0;
-    }
+        /* ─── Filter section ─── */
+        .filter-wrap {
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid #1b2336;
+            flex-shrink: 0;
+        }
 
-    .sec-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: #6a7f9a;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .sec-title span {
-      font-size: 14px;
-    }
+        .sec-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #6a7f9a;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sec-title span {
+            font-size: 14px;
+        }
 
-    .field {
-      margin-bottom: 10px;
-    }
-    .fl {
-      font-size: 10px;
-      color: #8a9fb0;
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
+        .field {
+            margin-bottom: 10px;
+        }
+        .fl {
+            font-size: 10px;
+            color: #8a9fb0;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
 
-    .field select,
-    .field input[type="date"] {
-      width: 100%;
-      background: #0e1420;
-      border: 1px solid #1b2336;
-      color: #e8edf5;
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 12px;
-      outline: none;
-      font-family: inherit;
-    }
-    .field select:focus,
-    .field input:focus {
-      border-color: #2a5aac;
-      box-shadow: 0 0 0 2px rgba(42, 90, 172, 0.2);
-    }
+        /* ─── DATE INPUT FIX: visible text on dark background ─── */
+        .field input[type="date"] {
+            width: 100%;
+            background: #141c2b;
+            /* slightly lighter than the sidebar bg */
+            border: 1px solid #2a3a50;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            /* ── force light text ── */
+            color: #e8edf5;
+            color-scheme: dark;
+            -webkit-text-fill-color: #e8edf5;
+            /* fallback for other browsers */
+            -webkit-font-smoothing: antialiased;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .field input[type="date"]:hover {
+            border-color: #3a5070;
+        }
+        .field input[type="date"]:focus {
+            border-color: #2a5aac;
+            box-shadow: 0 0 0 3px rgba(42, 90, 172, 0.25);
+            background: #1a2336;
+        }
+        /* WebKit date picker icon – lighten it */
+        .field input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        .field input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        /* Firefox / other: ensure placeholder text is light */
+        .field input[type="date"]::placeholder {
+            color: #6a7f9a !important;
+            -webkit-text-fill-color: #6a7f9a;
+            opacity: 0.8;
+        }
+        /* Edge / IE fallback */
+        .field input[type="date"]::-ms-input-placeholder {
+            color: #6a7f9a !important;
+        }
+        /* remove the default black text in some browsers */
+        .field input[type="date"]:not(:focus):not(:placeholder-shown) {
+            -webkit-text-fill-color: #e8edf5;
+            color: #e8edf5;
+        }
+        /* when the input has a value, ensure it's light */
+        .field input[type="date"]::-webkit-datetime-edit {
+            color: #e8edf5;
+            -webkit-text-fill-color: #e8edf5;
+        }
+        .field input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+            color: #e8edf5;
+            -webkit-text-fill-color: #e8edf5;
+        }
+        .field input[type="date"]::-webkit-datetime-edit-text {
+            color: #8a9fb0;
+            -webkit-text-fill-color: #8a9fb0;
+        }
+        .field input[type="date"]::-webkit-datetime-edit-month-field,
+        .field input[type="date"]::-webkit-datetime-edit-day-field,
+        .field input[type="date"]::-webkit-datetime-edit-year-field {
+            color: #e8edf5;
+            -webkit-text-fill-color: #e8edf5;
+        }
+        .field input[type="date"]::-webkit-datetime-edit-month-field:focus,
+        .field input[type="date"]::-webkit-datetime-edit-day-field:focus,
+        .field input[type="date"]::-webkit-datetime-edit-year-field:focus {
+            background: #1a3c6e;
+            color: #fff;
+            -webkit-text-fill-color: #fff;
+        }
 
-    .date-duo {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+        .date-duo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
 
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      margin-top: 12px;
-    }
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            margin-top: 12px;
+        }
 
-    .btn-apply {
-      padding: 8px 12px;
-      background: #1a3c8f;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-apply:hover {
-      background: #2554c7;
-    }
-    .btn-apply:disabled {
-      background: #1b2336;
-      color: #4a5a72;
-      cursor: default;
-    }
+        .btn-apply {
+            padding: 8px 12px;
+            background: #1a3c8f;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-apply:hover {
+            background: #2554c7;
+        }
+        .btn-apply:disabled {
+            background: #1b2336;
+            color: #4a5a72;
+            cursor: default;
+        }
 
-    .btn-reset {
-      padding: 8px 14px;
-      background: transparent;
-      color: #8a9fb0;
-      border: 1px solid #1b2336;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-    .btn-reset:hover {
-      background: #0e1420;
-      color: #e8edf5;
-    }
+        .btn-reset {
+            padding: 8px 14px;
+            background: transparent;
+            color: #8a9fb0;
+            border: 1px solid #1b2336;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .btn-reset:hover {
+            background: #0e1420;
+            color: #e8edf5;
+        }
 
-    .hint {
-      font-size: 10px;
-      color: #5a6f88;
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-    .hint strong {
-      color: #8a9fb0;
-    }
+        .hint {
+            font-size: 10px;
+            color: #5a6f88;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        .hint strong {
+            color: #8a9fb0;
+        }
 
-    /* ─── Results panel ─── */
-    .results-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        /* ─── Results panel ─── */
+        .results-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    .results-bar {
-      padding: 10px 18px 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #1b2336;
-      flex-shrink: 0;
-    }
-    .r-badge {
-      background: #151f30;
-      color: #8a9fb0;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 10px;
-      border-radius: 20px;
-    }
+        .results-bar {
+            padding: 10px 18px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1b2336;
+            flex-shrink: 0;
+        }
+        .r-badge {
+            background: #151f30;
+            color: #8a9fb0;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
 
-    .results-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 10px 20px;
-    }
+        .results-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 10px 20px;
+        }
 
-    /* ─── Spill card ─── */
-    .spill-card {
-      background: #0e1420;
-      border: 1px solid #1b2336;
-      border-left: 3px solid #1b2336;
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      transition: all 0.12s;
-    }
-    .spill-card:hover {
-      background: #131c2b;
-      border-color: #2a3a50;
-    }
-    .spill-card.sel {
-      background: #0b1a2e;
-      border-color: #2a5aac;
-      border-left-color: #2a5aac;
-    }
+        /* ─── Spill card ─── */
+        .spill-card {
+            background: #0e1420;
+            border: 1px solid #1b2336;
+            border-left: 3px solid #1b2336;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+        .spill-card:hover {
+            background: #131c2b;
+            border-color: #2a3a50;
+        }
+        .spill-card.sel {
+            background: #0b1a2e;
+            border-color: #2a5aac;
+            border-left-color: #2a5aac;
+        }
 
-    .c-id {
-      font-size: 9px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      color: #4d8fd9;
-      letter-spacing: 0.02em;
-      display: block;
-      margin-bottom: 2px;
-    }
-    .c-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #f0f4f8;
-      margin-bottom: 4px;
-      line-height: 1.3;
-    }
-    .c-meta {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .c-meta span {
-      font-size: 10px;
-      color: #8a9fb0;
-    }
+        .c-id {
+            font-size: 9px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: #4d8fd9;
+            letter-spacing: 0.02em;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .c-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f0f4f8;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .c-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .c-meta span {
+            font-size: 10px;
+            color: #8a9fb0;
+        }
 
-    /* ─── Empty / error states ─── */
-    .empty {
-      text-align: center;
-      padding: 40px 16px;
-      color: #6a7f9a;
-    }
-    .empty-icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-      opacity: 0.6;
-    }
-    .empty-msg {
-      font-size: 12px;
-      line-height: 1.6;
-    }
-    .empty-msg.err {
-      color: #f87171;
-    }
+        /* ─── Empty / error states ─── */
+        .empty {
+            text-align: center;
+            padding: 40px 16px;
+            color: #6a7f9a;
+        }
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+        .empty-msg {
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .empty-msg.err {
+            color: #f87171;
+        }
 
-    /* ─── Map area ─── */
-    .map-area {
-      flex: 1;
-      position: relative;
-    }
-    #map {
-      width: 100%;
-      height: 100%;
-      background: #07090f;
-    }
+        /* ─── Map area ─── */
+        .map-area {
+            flex: 1;
+            position: relative;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #07090f;
+        }
 
-    /* ─── Info bar (floating) ─── */
-    .info-bar {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(10, 15, 26, 0.92);
-      backdrop-filter: blur(6px);
-      border: 1px solid #1b2336;
-      border-radius: 30px;
-      padding: 6px 20px;
-      z-index: 600;
-      display: none;
-      align-items: center;
-      gap: 18px;
-      font-size: 11px;
-      color: #b0c4de;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
-    .info-bar strong {
-      color: #fff;
-      font-weight: 600;
-    }
-    .info-bar .sep {
-      width: 1px;
-      height: 18px;
-      background: #1b2336;
-    }
+        /* ─── Info bar (floating) ─── */
+        .info-bar {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 26, 0.92);
+            backdrop-filter: blur(6px);
+            border: 1px solid #1b2336;
+            border-radius: 30px;
+            padding: 6px 20px;
+            z-index: 600;
+            display: none;
+            align-items: center;
+            gap: 18px;
+            font-size: 11px;
+            color: #b0c4de;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .info-bar strong {
+            color: #fff;
+            font-weight: 600;
+        }
+        .info-bar .sep {
+            width: 1px;
+            height: 18px;
+            background: #1b2336;
+        }
 
-    /* ─── Detail card ─── */
-    .detail-card {
-      position: absolute;
-      top: 70px;
-      right: 14px;
-      width: 270px;
-      background: rgba(10, 15, 26, 0.96);
-      backdrop-filter: blur(6px);
-      border: 1px solid #1b2336;
-      border-radius: 10px;
-      padding: 16px;
-      z-index: 600;
-      display: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-      max-height: calc(100% - 100px);
-      overflow-y: auto;
-    }
-    .detail-card.show {
-      display: block;
-    }
+        /* ─── Detail card ─── */
+        .detail-card {
+            position: absolute;
+            top: 70px;
+            right: 14px;
+            width: 270px;
+            background: rgba(10, 15, 26, 0.96);
+            backdrop-filter: blur(6px);
+            border: 1px solid #1b2336;
+            border-radius: 10px;
+            padding: 16px;
+            z-index: 600;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            max-height: calc(100% - 100px);
+            overflow-y: auto;
+        }
+        .detail-card.show {
+            display: block;
+        }
 
-    .dc-hd {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .dc-title {
-      flex: 1;
-      font-size: 15px;
-      font-weight: 700;
-      color: #f0f4f8;
-      line-height: 1.3;
-    }
-    .dc-close {
-      background: none;
-      border: none;
-      color: #6a7f9a;
-      cursor: pointer;
-      font-size: 20px;
-      line-height: 1;
-      padding: 0 2px;
-      transition: color 0.15s;
-    }
-    .dc-close:hover {
-      color: #e8edf5;
-    }
+        .dc-hd {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .dc-title {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 700;
+            color: #f0f4f8;
+            line-height: 1.3;
+        }
+        .dc-close {
+            background: none;
+            border: none;
+            color: #6a7f9a;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0 2px;
+            transition: color 0.15s;
+        }
+        .dc-close:hover {
+            color: #e8edf5;
+        }
 
-    .dc-sep {
-      height: 1px;
-      background: #1b2336;
-      margin-bottom: 8px;
-    }
+        .dc-sep {
+            height: 1px;
+            background: #1b2336;
+            margin-bottom: 8px;
+        }
 
-    .dc-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      font-size: 11px;
-      border-bottom: 1px solid #0e1420;
-    }
-    .dc-row:last-child {
-      border-bottom: none;
-    }
-    .dc-l {
-      color: #8a9fb0;
-      flex-shrink: 0;
-      margin-right: 10px;
-    }
-    .dc-v {
-      color: #e8edf5;
-      font-weight: 500;
-      text-align: right;
-    }
-    .dc-v.mono {
-      font-family: monospace;
-      font-size: 9px;
-      color: #8a9fb0;
-    }
-    .dc-v.blue {
-      color: #4d8fd9;
-      font-family: monospace;
-      font-size: 10px;
-    }
+        .dc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 11px;
+            border-bottom: 1px solid #0e1420;
+        }
+        .dc-row:last-child {
+            border-bottom: none;
+        }
+        .dc-l {
+            color: #8a9fb0;
+            flex-shrink: 0;
+            margin-right: 10px;
+        }
+        .dc-v {
+            color: #e8edf5;
+            font-weight: 500;
+            text-align: right;
+        }
+        .dc-v.mono {
+            font-family: monospace;
+            font-size: 9px;
+            color: #8a9fb0;
+        }
+        .dc-v.blue {
+            color: #4d8fd9;
+            font-family: monospace;
+            font-size: 10px;
+        }
 
-    .btn-zoom {
-      width: 100%;
-      margin-top: 10px;
-      padding: 7px 0;
-      background: transparent;
-      color: #4d8fd9;
-      border: 1px solid #1a3c6e;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-    .btn-zoom:hover {
-      background: #0a1828;
-      border-color: #2a5aac;
-    }
+        .btn-zoom {
+            width: 100%;
+            margin-top: 10px;
+            padding: 7px 0;
+            background: transparent;
+            color: #4d8fd9;
+            border: 1px solid #1a3c6e;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .btn-zoom:hover {
+            background: #0a1828;
+            border-color: #2a5aac;
+        }
 
-    /* ─── Leaflet overrides ─── */
-    .oil-tip {
-      background: rgba(10, 15, 26, 0.95) !important;
-      border: 1px solid #1b2336 !important;
-      color: #e8edf5 !important;
-      font-size: 11px !important;
-      border-radius: 6px !important;
-      padding: 6px 10px !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
-    }
-    .oil-tip::before {
-      display: none !important;
-    }
+        /* ─── Leaflet overrides ─── */
+        .oil-tip {
+            background: rgba(10, 15, 26, 0.95) !important;
+            border: 1px solid #1b2336 !important;
+            color: #e8edf5 !important;
+            font-size: 11px !important;
+            border-radius: 6px !important;
+            padding: 6px 10px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+        }
+        .oil-tip::before {
+            display: none !important;
+        }
 
-    .leaflet-control-zoom {
-      border: 1px solid #1b2336 !important;
-      border-radius: 6px !important;
-      overflow: hidden;
-    }
-    .leaflet-control-zoom-in,
-    .leaflet-control-zoom-out {
-      background: #0e1420 !important;
-      color: #e8edf5 !important;
-      border-bottom: 1px solid #1b2336 !important;
-      transition: 0.1s;
-    }
-    .leaflet-control-zoom-in:hover,
-    .leaflet-control-zoom-out:hover {
-      background: #1b2336 !important;
-      color: #fff !important;
-    }
+        .leaflet-control-zoom {
+            border: 1px solid #1b2336 !important;
+            border-radius: 6px !important;
+            overflow: hidden;
+        }
+        .leaflet-control-zoom-in,
+        .leaflet-control-zoom-out {
+            background: #0e1420 !important;
+            color: #e8edf5 !important;
+            border-bottom: 1px solid #1b2336 !important;
+            transition: 0.1s;
+        }
+        .leaflet-control-zoom-in:hover,
+        .leaflet-control-zoom-out:hover {
+            background: #1b2336 !important;
+            color: #fff !important;
+        }
 
-    .leaflet-control-attribution {
-      background: rgba(10, 15, 26, 0.8) !important;
-      color: #6a7f9a !important;
-      font-size: 9px !important;
-      backdrop-filter: blur(4px);
-    }
-    .leaflet-control-attribution a {
-      color: #4d8fd9 !important;
-    }
+        .leaflet-control-attribution {
+            background: rgba(10, 15, 26, 0.8) !important;
+            color: #6a7f9a !important;
+            font-size: 9px !important;
+            backdrop-filter: blur(4px);
+        }
+        .leaflet-control-attribution a {
+            color: #4d8fd9 !important;
+        }
 
-    /* ─── Responsive ─── */
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 100%;
-        min-width: auto;
-        max-height: 45vh;
-        border-right: none;
-        border-bottom: 1px solid #1b2336;
-      }
-      .body {
-        flex-direction: column;
-      }
-      .map-area {
-        flex: 1;
-        min-height: 55vh;
-      }
-      .info-bar {
-        font-size: 9px;
-        gap: 10px;
-        padding: 4px 14px;
-      }
-      .detail-card {
-        width: 220px;
-        right: 8px;
-        top: 60px;
-        padding: 12px;
-      }
-      .h-pill {
-        font-size: 9px;
-        padding: 2px 10px;
-      }
-      .header-team {
-        display: none;
-      }
-      .h-right {
-        gap: 8px;
-      }
-      header {
-        padding: 0 12px;
-        height: 52px;
-      }
-      .h-title {
-        font-size: 13px;
-      }
-    }
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                min-width: auto;
+                max-height: 45vh;
+                border-right: none;
+                border-bottom: 1px solid #1b2336;
+            }
+            .body {
+                flex-direction: column;
+            }
+            .map-area {
+                flex: 1;
+                min-height: 55vh;
+            }
+            .info-bar {
+                font-size: 9px;
+                gap: 10px;
+                padding: 4px 14px;
+            }
+            .detail-card {
+                width: 220px;
+                right: 8px;
+                top: 60px;
+                padding: 12px;
+            }
+            .h-pill {
+                font-size: 9px;
+                padding: 2px 10px;
+            }
+            .header-team {
+                display: none;
+            }
+            .h-right {
+                gap: 8px;
+            }
+            header {
+                padding: 0 12px;
+                height: 52px;
+            }
+            .h-title {
+                font-size: 13px;
+            }
+        }
 
-    @media (max-width: 480px) {
-      .date-duo {
-        grid-template-columns: 1fr;
-      }
-      .action-row {
-        grid-template-columns: 1fr;
-      }
-      .detail-card {
-        width: calc(100% - 16px);
-        right: 8px;
-        top: 60px;
-        max-height: 50vh;
-      }
-    }
-  </style>
+        @media (max-width: 480px) {
+            .date-duo {
+                grid-template-columns: 1fr;
+            }
+            .action-row {
+                grid-template-columns: 1fr;
+            }
+            .detail-card {
+                width: calc(100% - 16px);
+                right: 8px;
+                top: 60px;
+                max-height: 50vh;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
-    </div>
-    <div>
-      <span class="h-title">NARSS Oil Spill Monitoring</span>
-      <span class="h-sub">| Real‑time GIS</span>
-    </div>
-    <div class="h-right">
-      <div class="h-pill">
-        <span class="conn-dot" id="conn-dot"></span>
-        <span id="conn-label">connecting…</span>
-      </div>
-      <div class="h-pill">
-        <strong id="stat-count">0</strong> spills
-      </div>
-      <div class="h-pill">
-        <strong id="stat-area">0 km²</strong> total
-      </div>
-      <div class="header-team">
-        <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
-        <span>Team: NARSS</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="body">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-      <!-- FILTERS -->
-      <div class="filter-wrap">
-        <div class="sec-title"><span>📅</span> Date Range</div>
-
-        <div class="field">
-          <div class="date-duo">
-            <div>
-              <label class="fl">From</label>
-              <!-- Default: 2014-01-01 -->
-              <input type="date" id="f-from" value="2014-01-01" />
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
+        </div>
+        <div>
+            <span class="h-title">NARSS Oil Spill Monitoring</span>
+            <span class="h-sub">| Real‑time GIS</span>
+        </div>
+        <div class="h-right">
+            <div class="h-pill">
+                <span class="conn-dot" id="conn-dot"></span>
+                <span id="conn-label">connecting…</span>
             </div>
-            <div>
-              <label class="fl">To</label>
-              <!-- Default: 2014-12-31 (full year 2014) -->
-              <input type="date" id="f-to" value="2014-12-31" />
+            <div class="h-pill">
+                <strong id="stat-count">0</strong> spills
             </div>
-          </div>
+            <div class="h-pill">
+                <strong id="stat-area">0 km²</strong> total
+            </div>
+            <div class="header-team">
+                <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
+                <span>Team: NARSS</span>
+            </div>
         </div>
+    </header>
 
-        <div class="action-row">
-          <button class="btn-apply" id="btn-apply" onclick="applyFilters()">Apply Filters</button>
-          <button class="btn-reset" onclick="resetFilters()">Reset</button>
+    <div class="body">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <!-- FILTERS -->
+            <div class="filter-wrap">
+                <div class="sec-title"><span>📅</span> Date Range</div>
+
+                <div class="field">
+                    <div class="date-duo">
+                        <div>
+                            <label class="fl">From</label>
+                            <!-- EMPTY by default → show ALL spills -->
+                            <input type="date" id="f-from" value="" placeholder="yyyy-mm-dd" />
+                        </div>
+                        <div>
+                            <label class="fl">To</label>
+                            <!-- EMPTY by default → show ALL spills -->
+                            <input type="date" id="f-to" value="" placeholder="yyyy-mm-dd" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn-apply" id="btn-apply" onclick="applyFilters()">Apply Filters</button>
+                    <button class="btn-reset" onclick="resetFilters()">Reset</button>
+                </div>
+
+                <div class="hint">
+                    💡 Leave dates empty to show <strong>all</strong> spills.
+                </div>
+            </div>
+
+            <!-- RESULTS -->
+            <div class="results-panel">
+                <div class="results-bar">
+                    <span class="sec-title" style="margin:0;"><span>📂</span> Shapefiles</span>
+                    <span class="r-badge" id="r-badge">— records</span>
+                </div>
+                <div class="results-list" id="results-list">
+                    <div class="empty">
+                        <div class="empty-icon">🗺️</div>
+                        <div class="empty-msg">Connecting to server…</div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- MAP AREA -->
+        <div class="map-area">
+
+            <!-- info bar -->
+            <div class="info-bar" id="info-bar">
+                <span>Showing <strong id="ib-count">0</strong> spills</span>
+                <span class="sep"></span>
+                <span>Total area <strong id="ib-area">0 km²</strong></span>
+                <span class="sep"></span>
+                <span>Click a polygon for details</span>
+            </div>
+
+            <!-- detail card -->
+            <div class="detail-card" id="detail-card">
+                <div class="dc-hd">
+                    <div class="dc-title" id="dc-title">—</div>
+                    <button class="dc-close" onclick="closeDetail()">×</button>
+                </div>
+                <div class="dc-sep"></div>
+                <div id="dc-body"></div>
+                <button class="btn-zoom" id="dc-zoom">⊕ Zoom to spill</button>
+            </div>
+
+            <div id="map"></div>
+
         </div>
-
-        <div class="hint">
-          💡 Leave dates empty to show <strong>all</strong> spills.
-        </div>
-      </div>
-
-      <!-- RESULTS -->
-      <div class="results-panel">
-        <div class="results-bar">
-          <span class="sec-title" style="margin:0;"><span>📂</span> Shapefiles</span>
-          <span class="r-badge" id="r-badge">— records</span>
-        </div>
-        <div class="results-list" id="results-list">
-          <div class="empty">
-            <div class="empty-icon">🗺️</div>
-            <div class="empty-msg">Connecting to server…</div>
-          </div>
-        </div>
-      </div>
-
-    </aside>
-
-    <!-- MAP AREA -->
-    <div class="map-area">
-
-      <!-- info bar -->
-      <div class="info-bar" id="info-bar">
-        <span>Showing <strong id="ib-count">0</strong> spills</span>
-        <span class="sep"></span>
-        <span>Total area <strong id="ib-area">0 km²</strong></span>
-        <span class="sep"></span>
-        <span>Click a polygon for details</span>
-      </div>
-
-      <!-- detail card -->
-      <div class="detail-card" id="detail-card">
-        <div class="dc-hd">
-          <div class="dc-title" id="dc-title">—</div>
-          <button class="dc-close" onclick="closeDetail()">×</button>
-        </div>
-        <div class="dc-sep"></div>
-        <div id="dc-body"></div>
-        <button class="btn-zoom" id="dc-zoom">⊕ Zoom to spill</button>
-      </div>
-
-      <!-- LEGEND – REMOVED as requested -->
-
-      <div id="map"></div>
-
     </div>
-  </div>
 
-  <!-- ============================================================
-       SCRIPTS
-  ============================================================ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
-  </script>
-  <script>
-    // ─── Configuration ────────────────────────────────────────────────
-    const API_BASE = "/api";
+    <!-- ============================================================
+         SCRIPTS
+    ============================================================ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+    </script>
+    <script>
+        // ─── Configuration ────────────────────────────────────────────────
+        const API_BASE = "/api";
 
-    // ─── Map initialization ──────────────────────────────────────────
-    const map = L.map('map', {
-      center: [22, 47],
-      zoom: 4,
-      zoomControl: false,
-    });
+        // ─── Map initialization ──────────────────────────────────────────
+        const map = L.map('map', {
+            center: [22, 47],
+            zoom: 4,
+            zoomControl: false,
+        });
 
-    // Custom zoom control (clean)
-    L.control.zoom({
-      position: 'bottomleft'
-    }).addTo(map);
+        L.control.zoom({
+            position: 'bottomleft'
+        }).addTo(map);
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
-      maxZoom: 19,
-    }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+            maxZoom: 19,
+        }).addTo(map);
 
-    // ─── State ────────────────────────────────────────────────────────
-    let layers = {};
-    let selId = null;
-    let lastRecords = [];
+        // ─── State ────────────────────────────────────────────────────────
+        let layers = {};
+        let selId = null;
+        let lastRecords = [];
 
-    // ─── Helpers ──────────────────────────────────────────────────────
-    const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
+        // ─── Helpers ──────────────────────────────────────────────────────
+        const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
-    function fmtDate(d) {
-      if (!d) return '—';
-      const [y, m, day] = d.split('-');
-      return `${parseInt(day)} ${MONTHS[parseInt(m) - 1]} ${y}`;
-    }
-
-    function fmtArea(a) {
-      if (a == null) return '—';
-      return a >= 1000 ? (a / 1000).toFixed(1) + ' k km²' : Math.round(a) + ' km²';
-    }
-
-    function setConn(ok, label) {
-      const dot = document.getElementById('conn-dot');
-      dot.className = 'conn-dot ' + (ok ? 'ok' : 'bad');
-      document.getElementById('conn-label').textContent = label;
-    }
-
-    // ─── Filter logic ──────────────────────────────────────────────────
-    async function applyFilters() {
-      const from = document.getElementById('f-from').value;
-      const to = document.getElementById('f-to').value;
-
-      const btn = document.getElementById('btn-apply');
-      btn.disabled = true;
-      btn.textContent = 'Loading…';
-
-      const params = new URLSearchParams();
-      if (from) params.set('date_from', from);
-      if (to) params.set('date_to', to);
-
-      try {
-        const res = await fetch(`${API_BASE}/spills?${params.toString()}`);
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-        const records = await res.json();
-        lastRecords = records;
-        setConn(true, 'connected');
-        renderList(records);
-        renderMap(records);
-      } catch (err) {
-        setConn(false, 'offline');
-        renderError(err);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Apply Filters';
-      }
-    }
-
-    function resetFilters() {
-      // Reset to full year 2014
-      document.getElementById('f-from').value = '2014-01-01';
-      document.getElementById('f-to').value = '2014-12-31';
-      closeDetail();
-      applyFilters();
-    }
-
-    // ─── Render: Error ──────────────────────────────────────────────────
-    function renderError(err) {
-      document.getElementById('r-badge').textContent = 'offline';
-      document.getElementById('stat-count').textContent = '—';
-      document.getElementById('stat-area').textContent = '—';
-      document.getElementById('info-bar').style.display = 'none';
-      document.getElementById('results-list').innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">⚠️</div>
-          <div class="empty-msg err">
-            Couldn't reach the backend at <code>${API_BASE}</code><br /><br />
-            ${err.message || 'Is the server running?'}
-          </div>
-        </div>`;
-    }
-
-    // ─── Render: List ──────────────────────────────────────────────────
-    function renderList(records) {
-      const totalArea = records.reduce((s, r) => s + (r.area_km2 || 0), 0);
-
-      document.getElementById('r-badge').textContent = `${records.length} records`;
-      document.getElementById('stat-count').textContent = records.length;
-      document.getElementById('stat-area').textContent = fmtArea(totalArea);
-
-      const bar = document.getElementById('info-bar');
-      if (records.length > 0) {
-        document.getElementById('ib-count').textContent = records.length;
-        document.getElementById('ib-area').textContent = fmtArea(totalArea);
-        bar.style.display = 'flex';
-      } else {
-        bar.style.display = 'none';
-      }
-
-      const list = document.getElementById('results-list');
-      if (records.length === 0) {
-        list.innerHTML = `
-          <div class="empty">
-            <div class="empty-icon">🔍</div>
-            <div class="empty-msg">No shapefiles found for this date range.<br />Try adjusting the filters.</div>
-          </div>`;
-        return;
-      }
-
-      list.innerHTML = records.map(s => `
-        <div class="spill-card" id="card-${s.id}" onclick="selectSpill('${s.id}')">
-          <span class="c-id">${s.id}</span>
-          <div class="c-name">${s.name}</div>
-          <div class="c-meta">
-            ${s.region ? `<span>📍 ${s.region}</span>` : ''}
-            <span>📅 ${fmtDate(s.spill_date)}</span>
-            <span>📐 ${fmtArea(s.area_km2)}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // ─── Render: Map ────────────────────────────────────────────────────
-    function renderMap(records) {
-      Object.values(layers).forEach(l => map.removeLayer(l));
-      layers = {};
-
-      if (records.length === 0) return;
-
-      const bounds = L.latLngBounds([]);
-
-      records.forEach(s => {
-        const layer = L.geoJSON({
-          type: 'Feature',
-          geometry: s.geometry
-        }, {
-          style: {
-            color: '#059669',
-            weight: 1.5,
-            fillColor: '#10b981',
-            fillOpacity: 0.4,
-            opacity: 0.85,
-          }
-        })
-          .bindTooltip(
-            `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}`,
-            { sticky: true, className: 'oil-tip' }
-          )
-          .on('click', () => selectSpill(s.id))
-          .addTo(map);
-
-        layers[s.id] = layer;
-        bounds.extend(layer.getBounds());
-      });
-
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
-      }
-    }
-
-    // ─── Selection ──────────────────────────────────────────────────────
-    function selectSpill(id) {
-      // Deselect previous
-      if (selId) {
-        document.getElementById(`card-${selId}`)?.classList.remove('sel');
-        if (layers[selId]) {
-          layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+        function fmtDate(d) {
+            if (!d) return '—';
+            const [y, m, day] = d.split('-');
+            return `${parseInt(day)} ${MONTHS[parseInt(m) - 1]} ${y}`;
         }
-      }
 
-      selId = id;
-
-      // Highlight card
-      const card = document.getElementById(`card-${id}`);
-      if (card) {
-        card.classList.add('sel');
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-
-      // Highlight layer
-      const layer = layers[id];
-      if (layer) {
-        layer.setStyle({ fillOpacity: 0.7, weight: 2.5 });
-        layer.bringToFront();
-      }
-
-      // Show detail
-      const s = lastRecords.find(x => x.id === id);
-      if (s) showDetail(s);
-    }
-
-    // ─── Detail panel ──────────────────────────────────────────────────
-    function showDetail(s) {
-      document.getElementById('dc-title').textContent = s.name;
-
-      document.getElementById('dc-body').innerHTML = `
-        <div class="dc-row"><span class="dc-l">ID</span><span class="dc-v blue">${s.id}</span></div>
-        ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span><span class="dc-v">${s.region}</span></div>` : ''}
-        <div class="dc-row"><span class="dc-l">Date</span><span class="dc-v">${fmtDate(s.spill_date)}</span></div>
-        <div class="dc-row"><span class="dc-l">Area</span><span class="dc-v">${fmtArea(s.area_km2)}</span></div>
-        ${s.source ? `<div class="dc-row"><span class="dc-l">Source</span><span class="dc-v">${s.source}</span></div>` : ''}
-        ${s.vessel ? `<div class="dc-row"><span class="dc-l">Vessel</span><span class="dc-v">${s.vessel}</span></div>` : ''}
-        ${s.oil_type ? `<div class="dc-row"><span class="dc-l">Oil type</span><span class="dc-v">${s.oil_type}</span></div>` : ''}
-        ${s.shapefile_name ? `<div class="dc-row"><span class="dc-l">File</span><span class="dc-v mono">${s.shapefile_name}</span></div>` : ''}
-      `;
-
-      document.getElementById('dc-zoom').onclick = () => {
-        const l = layers[s.id];
-        if (l && l.getBounds) {
-          map.fitBounds(l.getBounds(), { padding: [80, 80] });
+        function fmtArea(a) {
+            if (a == null) return '—';
+            return a >= 1000 ? (a / 1000).toFixed(1) + ' k km²' : Math.round(a) + ' km²';
         }
-      };
 
-      document.getElementById('detail-card').classList.add('show');
-    }
-
-    function closeDetail() {
-      document.getElementById('detail-card').classList.remove('show');
-      if (selId) {
-        document.getElementById(`card-${selId}`)?.classList.remove('sel');
-        if (layers[selId]) {
-          layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+        function setConn(ok, label) {
+            const dot = document.getElementById('conn-dot');
+            dot.className = 'conn-dot ' + (ok ? 'ok' : 'bad');
+            document.getElementById('conn-label').textContent = label;
         }
-        selId = null;
-      }
-    }
 
-    // ─── Init ──────────────────────────────────────────────────────────
-    applyFilters();
-  </script>
+        // ─── Filter logic ──────────────────────────────────────────────────
+        async function applyFilters() {
+            const from = document.getElementById('f-from').value;
+            const to = document.getElementById('f-to').value;
+
+            const btn = document.getElementById('btn-apply');
+            btn.disabled = true;
+            btn.textContent = 'Loading…';
+
+            const params = new URLSearchParams();
+            if (from) params.set('date_from', from);
+            if (to) params.set('date_to', to);
+
+            try {
+                const res = await fetch(`${API_BASE}/spills?${params.toString()}`);
+                if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                const records = await res.json();
+                lastRecords = records;
+                setConn(true, 'connected');
+                renderList(records);
+                renderMap(records);
+            } catch (err) {
+                setConn(false, 'offline');
+                renderError(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Apply Filters';
+            }
+        }
+
+        function resetFilters() {
+            // Reset to EMPTY → show ALL spills
+            document.getElementById('f-from').value = '';
+            document.getElementById('f-to').value = '';
+            closeDetail();
+            applyFilters();
+        }
+
+        // ─── Render: Error ──────────────────────────────────────────────────
+        function renderError(err) {
+            document.getElementById('r-badge').textContent = 'offline';
+            document.getElementById('stat-count').textContent = '—';
+            document.getElementById('stat-area').textContent = '—';
+            document.getElementById('info-bar').style.display = 'none';
+            document.getElementById('results-list').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-msg err">
+                        Couldn't reach the backend at <code>${API_BASE}</code><br /><br />
+                        ${err.message || 'Is the server running?'}
+                    </div>
+                </div>`;
+        }
+
+        // ─── Render: List ──────────────────────────────────────────────────
+        function renderList(records) {
+            const totalArea = records.reduce((s, r) => s + (r.area_km2 || 0), 0);
+
+            document.getElementById('r-badge').textContent = `${records.length} records`;
+            document.getElementById('stat-count').textContent = records.length;
+            document.getElementById('stat-area').textContent = fmtArea(totalArea);
+
+            const bar = document.getElementById('info-bar');
+            if (records.length > 0) {
+                document.getElementById('ib-count').textContent = records.length;
+                document.getElementById('ib-area').textContent = fmtArea(totalArea);
+                bar.style.display = 'flex';
+            } else {
+                bar.style.display = 'none';
+            }
+
+            const list = document.getElementById('results-list');
+            if (records.length === 0) {
+                list.innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">🔍</div>
+                        <div class="empty-msg">No shapefiles found for this date range.<br />Try adjusting the filters.</div>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = records.map(s => `
+                <div class="spill-card" id="card-${s.id}" onclick="selectSpill('${s.id}')">
+                    <span class="c-id">${s.id}</span>
+                    <div class="c-name">${s.name}</div>
+                    <div class="c-meta">
+                        ${s.region ? `<span>📍 ${s.region}</span>` : ''}
+                        <span>📅 ${fmtDate(s.spill_date)}</span>
+                        <span>📐 ${fmtArea(s.area_km2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ─── Render: Map ────────────────────────────────────────────────────
+        function renderMap(records) {
+            Object.values(layers).forEach(l => map.removeLayer(l));
+            layers = {};
+
+            if (records.length === 0) return;
+
+            const bounds = L.latLngBounds([]);
+
+            records.forEach(s => {
+                const layer = L.geoJSON({
+                    type: 'Feature',
+                    geometry: s.geometry
+                }, {
+                    style: {
+                        color: '#059669',
+                        weight: 1.5,
+                        fillColor: '#10b981',
+                        fillOpacity: 0.4,
+                        opacity: 0.85,
+                    }
+                })
+                    .bindTooltip(
+                        `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}`,
+                        { sticky: true, className: 'oil-tip' }
+                    )
+                    .on('click', () => selectSpill(s.id))
+                    .addTo(map);
+
+                layers[s.id] = layer;
+                bounds.extend(layer.getBounds());
+            });
+
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
+            }
+        }
+
+        // ─── Selection ──────────────────────────────────────────────────────
+        function selectSpill(id) {
+            // Deselect previous
+            if (selId) {
+                document.getElementById(`card-${selId}`)?.classList.remove('sel');
+                if (layers[selId]) {
+                    layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+                }
+            }
+
+            selId = id;
+
+            const card = document.getElementById(`card-${id}`);
+            if (card) {
+                card.classList.add('sel');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            const layer = layers[id];
+            if (layer) {
+                layer.setStyle({ fillOpacity: 0.7, weight: 2.5 });
+                layer.bringToFront();
+            }
+
+            const s = lastRecords.find(x => x.id === id);
+            if (s) showDetail(s);
+        }
+
+        // ─── Detail panel ──────────────────────────────────────────────────
+        function showDetail(s) {
+            document.getElementById('dc-title').textContent = s.name;
+
+            document.getElementById('dc-body').innerHTML = `
+                <div class="dc-row"><span class="dc-l">ID</span><span class="dc-v blue">${s.id}</span></div>
+                ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span><span class="dc-v">${s.region}</span></div>` : ''}
+                <div class="dc-row"><span class="dc-l">Date</span><span class="dc-v">${fmtDate(s.spill_date)}</span></div>
+                <div class="dc-row"><span class="dc-l">Area</span><span class="dc-v">${fmtArea(s.area_km2)}</span></div>
+                ${s.source ? `<div class="dc-row"><span class="dc-l">Source</span><span class="dc-v">${s.source}</span></div>` : ''}
+                ${s.vessel ? `<div class="dc-row"><span class="dc-l">Vessel</span><span class="dc-v">${s.vessel}</span></div>` : ''}
+                ${s.oil_type ? `<div class="dc-row"><span class="dc-l">Oil type</span><span class="dc-v">${s.oil_type}</span></div>` : ''}
+                ${s.shapefile_name ? `<div class="dc-row"><span class="dc-l">File</span><span class="dc-v mono">${s.shapefile_name}</span></div>` : ''}
+            `;
+
+            document.getElementById('dc-zoom').onclick = () => {
+                const l = layers[s.id];
+                if (l && l.getBounds) {
+                    map.fitBounds(l.getBounds(), { padding: [80, 80] });
+                }
+            };
+
+            document.getElementById('detail-card').classList.add('show');
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-card').classList.remove('show');
+            if (selId) {
+                document.getElementById(`card-${selId}`)?.classList.remove('sel');
+                if (layers[selId]) {
+                    layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+                }
+                selId = null;
+            }
+        }
+
+        // ─── Init ──────────────────────────────────────────────────────────
+        // Load all spills by default (dates are empty)
+        applyFilters();
+    </script>
 </body>
 </html>
