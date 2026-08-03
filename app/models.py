@@ -26,6 +26,6 @@ class SpillRecord(Base):
 
     geometry_geojson = Column(Text, nullable=False)              # GeoJSON geometry as text
     shapefile_name = Column(String, nullable=True)               # original uploaded filename
-    stored_zip_path = Column(String, nullable=True)              # path to saved original zip on disk
+    stored_zip_url = Column(String, nullable=True)                # Vercel Blob URL for the original zip
 
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

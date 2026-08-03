@@ -110,7 +110,7 @@ def run():
                 severity=d["severity"], source=d["source"], vessel=d["vessel"],
                 oil_type=d["oil_type"], status=d["status"], area_km2=area,
                 geometry_geojson=json.dumps(d["geometry"]),
-                shapefile_name=d["shapefile_name"], stored_zip_path=None,
+                shapefile_name=d["shapefile_name"], stored_zip_url=None,
             )
             db.add(rec)
             created += 1

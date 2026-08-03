@@ -23,18 +23,17 @@ See README.md for the metadata fields the upload form must send.
 """
 import datetime
 import json
-import os
 import uuid
 from typing import Optional, List
 
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from . import models, schemas, security, geo_utils
+from . import models, schemas, security, geo_utils, blob_storage
 from .database import engine, Base, get_db, BASE_DIR
 
 # Create the app first
@@ -45,9 +44,10 @@ app = FastAPI(title="Oil Spill Shapefile API", version="1.0.0")
 def startup():
     Base.metadata.create_all(bind=engine)
 
-# Use environment variable for upload dir
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# Uploaded shapefile zips are stored in Vercel Blob (see app/blob_storage.py),
+# not on local disk — Vercel's serverless filesystem is read-only outside of
+# /tmp, and /tmp itself is wiped between cold starts, so local storage does
+# not survive in production.
 
 # ─────────────────────────────────────────────────────────────
 # SERVE STATIC FRONTEND FILES
@@ -245,11 +245,12 @@ async def upload_shapefile(
     if db.query(models.SpillRecord).filter(models.SpillRecord.id == rid).first():
         raise HTTPException(status_code=409, detail=f"A record with id '{rid}' already exists.")
 
-    # --- Persist the original zip on disk ---
-    stored_name = f"{rid}_{uuid.uuid4().hex[:8]}.zip"
-    stored_path = os.path.join(UPLOAD_DIR, stored_name)
-    with open(stored_path, "wb") as f:
-        f.write(raw)
+    # --- Persist the original zip in Vercel Blob (not local disk) ---
+    blob_pathname = f"uploads/{rid}_{uuid.uuid4().hex[:8]}.zip"
+    try:
+        blob_url = blob_storage.upload_zip(blob_pathname, raw)
+    except blob_storage.BlobStorageError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     # --- Create database record ---
     rec = models.SpillRecord(
@@ -265,7 +266,7 @@ async def upload_shapefile(
         area_km2=area_km2,
         geometry_geojson=json.dumps(geometry),
         shapefile_name=file.filename,
-        stored_zip_path=stored_path,
+        stored_zip_url=blob_url,
     )
     db.add(rec)
     db.commit()
@@ -285,8 +286,8 @@ def admin_delete_spill(spill_id: str, db: Session = Depends(get_db), _admin=Depe
     rec = db.query(models.SpillRecord).filter(models.SpillRecord.id == spill_id).first()
     if not rec:
         raise HTTPException(status_code=404, detail="Spill record not found")
-    if rec.stored_zip_path and os.path.exists(rec.stored_zip_path):
-        os.remove(rec.stored_zip_path)
+    if rec.stored_zip_url:
+        blob_storage.delete_zip(rec.stored_zip_url)
     db.delete(rec)
     db.commit()
     return {"message": f"Deleted {spill_id}"}
@@ -295,6 +296,15 @@ def admin_delete_spill(spill_id: str, db: Session = Depends(get_db), _admin=Depe
 @app.get("/api/admin/spills/{spill_id}/download")
 def admin_download_shapefile(spill_id: str, db: Session = Depends(get_db), _admin=Depends(security.require_admin)):
     rec = db.query(models.SpillRecord).filter(models.SpillRecord.id == spill_id).first()
-    if not rec or not rec.stored_zip_path or not os.path.exists(rec.stored_zip_path):
-        raise HTTPException(status_code=404, detail="Original shapefile not found on server")
-    return FileResponse(rec.stored_zip_path, filename=rec.shapefile_name or f"{spill_id}.zip")
+    if not rec or not rec.stored_zip_url:
+        raise HTTPException(status_code=404, detail="Original shapefile not found in storage")
+    try:
+        data = blob_storage.fetch_zip_bytes(rec.stored_zip_url)
+    except blob_storage.BlobStorageError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    filename = rec.shapefile_name or f"{spill_id}.zip"
+    return Response(
+        content=data,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

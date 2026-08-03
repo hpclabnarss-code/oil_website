@@ -51,7 +51,26 @@ Set these *before* starting uvicorn. If you skip this, the default is
 `admin` / `changeme123` — fine to test with, but change it before this is
 reachable from outside your machine.
 
-## 3. (Optional) load demo data
+## 3. Set up storage for uploaded shapefiles (required in production)
+
+Uploaded `.zip` shapefiles are stored in **Vercel Blob**, not on local disk —
+Vercel's serverless functions run on a read-only filesystem (only `/tmp` is
+writable, and it's wiped on every cold start), so local storage does not
+survive in production.
+
+In the Vercel dashboard: **Project -> Storage -> Create Database -> Blob**,
+then connect it to this project. Vercel automatically adds a
+`BLOB_READ_WRITE_TOKEN` environment variable, which `app/blob_storage.py`
+(via the `vercel_blob` package) picks up automatically — no extra config
+needed once the store is connected.
+
+Note: Blob URLs are public-by-default at the storage layer (anyone holding
+the URL can fetch the file directly). The admin `/download` endpoint does
+not redirect to that raw URL — it fetches the bytes server-side and streams
+them back through our own Bearer-token-gated route instead, so the original
+zip is not handed out unauthenticated.
+
+## 3b. (Optional) load demo data
 
 ```bash
 python seed_data.py
