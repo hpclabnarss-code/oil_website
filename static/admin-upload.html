@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oil Spill Admin — Upload Shapefiles</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     /* ... (same as before, unchanged) ... */
     /* I'll include the full style again for completeness */
@@ -107,6 +108,7 @@
     .file-item .fstatus.err{color:#fca5a5;}
     .file-item .fstatus.uploading{color:#fbbf24;}
     .file-item .fstatus.skipped{color:#facc15;}
+    .file-item .fstatus.warn{color:#fb923c;}
     .file-item .fremove{
       background:transparent;border:none;color:#7a9ab8;cursor:pointer;
       font-size:14px;line-height:1;padding:0 4px;flex-shrink:0;
@@ -224,8 +226,8 @@
         <input type="text" id="up-name" placeholder="Leave blank to auto‑generate from each filename">
       </div>
       <div class="field">
-        <label class="fl">Spill Date (optional – auto‑extracted from .dbf)</label>
-        <input type="date" id="up-date" value="2014-01-01">
+        <label class="fl">Spill Date (optional – leave blank to auto‑read from each zip's .dbf; error shown per file if none found)</label>
+        <input type="date" id="up-date">
       </div>
       <div class="field-row2">
         <div class="field">
@@ -448,6 +450,125 @@ function updateBatchSummary() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// EXTRACT SPILL DATE FROM ZIP'S .dbf (client-side)
+// ─────────────────────────────────────────────────────────────
+// Field names we consider likely to hold the spill/incident date.
+// Checked in priority order (case-insensitive).
+const DATE_FIELD_NAME_HINTS = [
+  'spill_date','spilldate','date','event_date','eventdate',
+  'incident_d','incidentdate','occurred','obs_date','obsdate','img_date','imgdate'
+];
+
+function parseDbfDate(str) {
+  if (!str) return null;
+  const s = str.trim();
+  if (!s) return null;
+  // DBF "D" type: YYYYMMDD
+  let m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  // Common text formats: YYYY-MM-DD or MM/DD/YYYY
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return s;
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  return null;
+}
+
+// Reads a .dbf ArrayBuffer and returns an ISO date string (YYYY-MM-DD) or null.
+function extractDateFromDbfBuffer(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const headerSize = view.getUint16(8, true);
+  const recordSize = view.getUint16(10, true);
+
+  // Parse field descriptors (32 bytes each, starting at offset 32,
+  // terminated by 0x0D).
+  const fields = [];
+  let offset = 32;
+  while (offset < headerSize - 1) {
+    if (bytes[offset] === 0x0D) break;
+    let name = '';
+    for (let i = 0; i < 11; i++) {
+      const c = bytes[offset + i];
+      if (c === 0) break;
+      name += String.fromCharCode(c);
+    }
+    const type = String.fromCharCode(bytes[offset + 11]);
+    const length = bytes[offset + 16];
+    fields.push({ name, type, length });
+    offset += 32;
+  }
+  if (fields.length === 0) return null;
+
+  // Rank candidate fields: prefer real Date-type fields, then any field
+  // whose name matches a known hint, in hint priority order.
+  let candidates = fields.filter(f => f.type === 'D');
+  for (const hint of DATE_FIELD_NAME_HINTS) {
+    const match = fields.find(f => f.name.toLowerCase() === hint);
+    if (match && !candidates.includes(match)) candidates.push(match);
+  }
+  if (candidates.length === 0) {
+    // Loose fallback: any field with "date" in the name.
+    candidates = fields.filter(f => f.type !== 'N' && /date/i.test(f.name));
+  }
+  if (candidates.length === 0) return null;
+
+  // Read the first non-deleted record.
+  let recOffset = headerSize;
+  const decoder = new TextDecoder('ascii');
+  while (recOffset + recordSize <= bytes.length) {
+    const deleteFlag = bytes[recOffset];
+    if (deleteFlag !== 0x2A) { // not marked deleted
+      let fieldOffset = recOffset + 1;
+      const fieldValues = {};
+      for (const f of fields) {
+        const raw = decoder.decode(bytes.subarray(fieldOffset, fieldOffset + f.length));
+        fieldValues[f.name] = raw;
+        fieldOffset += f.length;
+      }
+      for (const c of candidates) {
+        const parsed = parseDbfDate(fieldValues[c.name]);
+        if (parsed) return parsed;
+      }
+      break; // only inspect the first record
+    }
+    recOffset += recordSize;
+  }
+  return null;
+}
+
+// Opens the .zip, finds the first .dbf inside, and extracts a date.
+// Throws an Error with a user-facing message if nothing usable is found.
+async function extractDateFromZip(file) {
+  if (typeof JSZip === 'undefined') {
+    throw new Error('Zip parser failed to load — check your connection');
+  }
+  let zip;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch (e) {
+    throw new Error('Could not read zip file');
+  }
+  const dbfEntry = Object.values(zip.files).find(
+    f => !f.dir && f.name.toLowerCase().endsWith('.dbf')
+  );
+  if (!dbfEntry) {
+    throw new Error('No .dbf file found inside zip');
+  }
+  let buffer;
+  try {
+    buffer = await dbfEntry.async('arraybuffer');
+  } catch (e) {
+    throw new Error('Could not read .dbf inside zip');
+  }
+  const date = extractDateFromDbfBuffer(buffer);
+  if (!date) {
+    throw new Error('No date found in shapefile (.dbf)');
+  }
+  return date;
+}
+
+// ─────────────────────────────────────────────────────────────
 // UPLOAD ALL FILES (with duplicate detection)
 // ─────────────────────────────────────────────────────────────
 async function uploadAllFiles() {
@@ -534,6 +655,27 @@ async function uploadAllFiles() {
     const file = item.file;
     const i = item.index;
     const statusEl = document.getElementById(`fstatus-${i}`);
+
+    // Resolve the date to send: an explicit form value wins; otherwise
+    // pull it straight out of this file's .dbf.
+    let fileDate = commonMeta.date;
+    if (!fileDate) {
+      if (statusEl) {
+        statusEl.textContent = 'reading .dbf…';
+        statusEl.className = 'fstatus uploading';
+      }
+      try {
+        fileDate = await extractDateFromZip(file);
+      } catch (dateErr) {
+        failCount++;
+        if (statusEl) {
+          statusEl.textContent = '✗ ' + (dateErr.message || 'No date found in shapefile');
+          statusEl.className = 'fstatus err';
+        }
+        continue; // skip upload — no date available for this file
+      }
+    }
+
     if (statusEl) {
       statusEl.textContent = 'uploading…';
       statusEl.className = 'fstatus uploading';
@@ -543,7 +685,7 @@ async function uploadAllFiles() {
       const fd = new FormData();
       fd.append('file', file);
       if (commonMeta.name) fd.append('name', commonMeta.name);
-      if (commonMeta.date) fd.append('spill_date', commonMeta.date);
+      fd.append('spill_date', fileDate);
       if (commonMeta.region) fd.append('region', commonMeta.region);
       if (commonMeta.vessel) fd.append('vessel', commonMeta.vessel);
       if (commonMeta.oil_type) fd.append('oil_type', commonMeta.oil_type);
@@ -560,7 +702,7 @@ async function uploadAllFiles() {
 
       successCount++;
       if (statusEl) {
-        statusEl.textContent = '✓ done';
+        statusEl.textContent = '✓ done' + (!commonMeta.date ? ` (date: ${fileDate})` : '');
         statusEl.className = 'fstatus ok';
       }
     } catch (err) {
