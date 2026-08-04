@@ -12,11 +12,15 @@ if not DATABASE_URL:
     # local SQLite (for testing)
     DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'oilspill.db')}"
     engine = create_engine(
-        DATABASE_URL, connect_args={"check_same_thread": False}, echo=True
+        DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
     )
 else:
-    # Postgres (Neon) – use sync driver
-    engine = create_engine(DATABASE_URL, echo=True, pool_pre_ping=True)
+    # Neon/Heroku-style URLs start with "postgres://", but SQLAlchemy 1.4+
+    # requires the "postgresql://" scheme — without this fix, create_engine()
+    # raises at import time and crashes every single request on Vercel.
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
