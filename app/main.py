@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from app.database import engine, Base, get_db
+from app.database import engine, Base, get_db, ensure_schema_updated
 from app.models import SpillRecord
 from app.geo_utils import parse_shapefile_zip, ShapefileParseError
 from app.blob_storage import upload_zip, delete_zip, fetch_zip_bytes, BlobStorageError
@@ -32,6 +32,9 @@ STATIC_DIR = Path("static")
 # Creates tables on the DB pointed to by DATABASE_URL (Postgres in prod,
 # local sqlite fallback for dev — see app/database.py)
 Base.metadata.create_all(bind=engine)
+
+# ★ Auto‑migrate missing columns (fixes missing stored_zip_url, etc.)
+ensure_schema_updated(engine)
 
 
 def record_to_dict(record: SpillRecord) -> dict:
@@ -50,7 +53,6 @@ def record_to_dict(record: SpillRecord) -> dict:
         "shapefile_name": record.shapefile_name,
         "created_at": record.created_at.isoformat() if record.created_at else None,
     }
-
 
 
 # ============================================================================
