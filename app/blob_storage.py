@@ -16,9 +16,11 @@ def upload_zip(pathname: str, data: bytes) -> str:
         result = vercel_blob.put(
             pathname,
             data,
-            addRandomSuffix=True,      # boolean, not "true"
-            contentType="application/zip",
-            access="private",          # crucial: matches private store
+            {
+                "addRandomSuffix": "true",
+                "contentType": "application/zip",
+                "access": "private",          # critical for private stores
+            }
         )
     except Exception as e:
         raise BlobStorageError(f"Could not upload to Vercel Blob: {e}")
