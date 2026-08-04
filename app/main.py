@@ -121,7 +121,7 @@ def get_db():
 
 # Simple admin auth (hardcoded for dev – override with env vars)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme123")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "password")
 
 
 def verify_token(token: str) -> bool:
