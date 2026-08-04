@@ -16,7 +16,7 @@ from datetime import date, datetime
 from typing import Optional, List
 from pathlib import Path
 
-from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Form, Depends
+from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Form, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -121,7 +121,7 @@ def get_db():
 
 # Simple admin auth (hardcoded for dev – override with env vars)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "password")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme123")
 
 
 def verify_token(token: str) -> bool:
@@ -130,7 +130,19 @@ def verify_token(token: str) -> bool:
     return token == "mock-jwt-token" or token.startswith("mock-")
 
 
-def get_current_user(token: str = Query(...)):
+def get_token_from_header(authorization: Optional[str] = Header(None)) -> str:
+    """Extract the bearer token from the Authorization header.
+
+    The frontend sends `Authorization: Bearer <token>` — this replaces the
+    old `token: str = Query(...)` param which the frontend never actually sent,
+    causing every admin request to fail with a 422 validation error.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    return authorization.removeprefix("Bearer ").strip()
+
+
+def get_current_user(token: str = Depends(get_token_from_header)):
     if not verify_token(token):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return {"username": "admin"}
@@ -252,7 +264,7 @@ async def admin_upload(
     vessel: Optional[str] = Form(None),
     oil_type: Optional[str] = Form(None),
     status: Optional[str] = Form("Active"),
-    token: str = Query(...),
+    token: str = Depends(get_token_from_header),
     db: Session = Depends(get_db),
 ):
     """Upload a shapefile ZIP archive and store its metadata."""
@@ -330,7 +342,7 @@ async def admin_upload(
 
 
 @app.get("/api/admin/spills")
-def admin_list_spills(token: str = Query(...), db: Session = Depends(get_db)):
+def admin_list_spills(token: str = Depends(get_token_from_header), db: Session = Depends(get_db)):
     if not verify_token(token):
         raise HTTPException(401, "Invalid or expired token")
     records = db.query(SpillRecord).all()
@@ -338,7 +350,7 @@ def admin_list_spills(token: str = Query(...), db: Session = Depends(get_db)):
 
 
 @app.delete("/api/admin/spills/{spill_id}")
-def admin_delete_spill(spill_id: str, token: str = Query(...), db: Session = Depends(get_db)):
+def admin_delete_spill(spill_id: str, token: str = Depends(get_token_from_header), db: Session = Depends(get_db)):
     if not verify_token(token):
         raise HTTPException(401, "Invalid or expired token")
 
@@ -358,7 +370,7 @@ def admin_delete_spill(spill_id: str, token: str = Query(...), db: Session = Dep
 
 
 @app.get("/api/admin/spills/{spill_id}/download")
-def admin_download_shapefile(spill_id: str, token: str = Query(...), db: Session = Depends(get_db)):
+def admin_download_shapefile(spill_id: str, token: str = Depends(get_token_from_header), db: Session = Depends(get_db)):
     if not verify_token(token):
         raise HTTPException(401, "Invalid or expired token")
 
