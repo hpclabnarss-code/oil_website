@@ -99,6 +99,25 @@
             font-weight: 600;
         }
 
+        .btn-admin {
+            background: #1a3c8f;
+            border: none;
+            color: #fff;
+            border-radius: 100px;
+            padding: 5px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-admin:hover {
+            background: #2554c7;
+        }
+
         .conn-dot {
             width: 8px;
             height: 8px;
@@ -177,23 +196,18 @@
             font-weight: 500;
         }
 
-        /* ─── DATE INPUT FIX: visible text on dark background ─── */
         .field input[type="date"] {
             width: 100%;
             background: #141c2b;
-            /* slightly lighter than the sidebar bg */
             border: 1px solid #2a3a50;
             border-radius: 6px;
             padding: 8px 10px;
             font-size: 13px;
             font-family: inherit;
             outline: none;
-            /* ── force light text ── */
             color: #e8edf5;
             color-scheme: dark;
             -webkit-text-fill-color: #e8edf5;
-            /* fallback for other browsers */
-            -webkit-font-smoothing: antialiased;
             transition: border-color 0.15s, box-shadow 0.15s;
         }
         .field input[type="date"]:hover {
@@ -204,7 +218,6 @@
             box-shadow: 0 0 0 3px rgba(42, 90, 172, 0.25);
             background: #1a2336;
         }
-        /* WebKit date picker icon – lighten it */
         .field input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(0.8);
             cursor: pointer;
@@ -214,46 +227,14 @@
         .field input[type="date"]::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
         }
-        /* Firefox / other: ensure placeholder text is light */
         .field input[type="date"]::placeholder {
             color: #6a7f9a !important;
             -webkit-text-fill-color: #6a7f9a;
             opacity: 0.8;
         }
-        /* Edge / IE fallback */
-        .field input[type="date"]::-ms-input-placeholder {
-            color: #6a7f9a !important;
-        }
-        /* remove the default black text in some browsers */
-        .field input[type="date"]:not(:focus):not(:placeholder-shown) {
-            -webkit-text-fill-color: #e8edf5;
-            color: #e8edf5;
-        }
-        /* when the input has a value, ensure it's light */
         .field input[type="date"]::-webkit-datetime-edit {
             color: #e8edf5;
             -webkit-text-fill-color: #e8edf5;
-        }
-        .field input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-            color: #e8edf5;
-            -webkit-text-fill-color: #e8edf5;
-        }
-        .field input[type="date"]::-webkit-datetime-edit-text {
-            color: #8a9fb0;
-            -webkit-text-fill-color: #8a9fb0;
-        }
-        .field input[type="date"]::-webkit-datetime-edit-month-field,
-        .field input[type="date"]::-webkit-datetime-edit-day-field,
-        .field input[type="date"]::-webkit-datetime-edit-year-field {
-            color: #e8edf5;
-            -webkit-text-fill-color: #e8edf5;
-        }
-        .field input[type="date"]::-webkit-datetime-edit-month-field:focus,
-        .field input[type="date"]::-webkit-datetime-edit-day-field:focus,
-        .field input[type="date"]::-webkit-datetime-edit-year-field:focus {
-            background: #1a3c6e;
-            color: #fff;
-            -webkit-text-fill-color: #fff;
         }
 
         .date-duo {
@@ -383,12 +364,42 @@
         }
         .c-meta {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .c-meta span {
             font-size: 10px;
             color: #8a9fb0;
+        }
+        .c-severity {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .sev-critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        .sev-high {
+            background: #7c2d12;
+            color: #fdba74;
+        }
+        .sev-medium {
+            background: #78350f;
+            color: #fcd34d;
+        }
+        .sev-low {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        .sev-unknown {
+            background: #1b2336;
+            color: #6a7f9a;
         }
 
         /* ─── Empty / error states ─── */
@@ -456,7 +467,7 @@
             position: absolute;
             top: 70px;
             right: 14px;
-            width: 270px;
+            width: 280px;
             background: rgba(10, 15, 26, 0.96);
             backdrop-filter: blur(6px);
             border: 1px solid #1b2336;
@@ -616,12 +627,13 @@
                 font-size: 9px;
                 gap: 10px;
                 padding: 4px 14px;
+                top: 10px;
             }
             .detail-card {
-                width: 220px;
+                width: calc(100% - 16px);
                 right: 8px;
                 top: 60px;
-                padding: 12px;
+                max-height: 50vh;
             }
             .h-pill {
                 font-size: 9px;
@@ -640,6 +652,10 @@
             .h-title {
                 font-size: 13px;
             }
+            .btn-admin {
+                font-size: 10px;
+                padding: 4px 12px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -648,12 +664,6 @@
             }
             .action-row {
                 grid-template-columns: 1fr;
-            }
-            .detail-card {
-                width: calc(100% - 16px);
-                right: 8px;
-                top: 60px;
-                max-height: 50vh;
             }
         }
     </style>
@@ -680,6 +690,7 @@
             <div class="h-pill">
                 <strong id="stat-area">0 km²</strong> total
             </div>
+            <a href="/admin" class="btn-admin">⬆ Upload</a>
             <div class="header-team">
                 <img src="/static/652ff536727ed.png" alt="NARSS" onerror="this.style.display='none'" />
                 <span>Team: NARSS</span>
@@ -700,12 +711,10 @@
                     <div class="date-duo">
                         <div>
                             <label class="fl">From</label>
-                            <!-- EMPTY by default → show ALL spills -->
                             <input type="date" id="f-from" value="" placeholder="yyyy-mm-dd" />
                         </div>
                         <div>
                             <label class="fl">To</label>
-                            <!-- EMPTY by default → show ALL spills -->
                             <input type="date" id="f-to" value="" placeholder="yyyy-mm-dd" />
                         </div>
                     </div>
@@ -795,6 +804,32 @@
         let selId = null;
         let lastRecords = [];
 
+        // ─── Severity color mapping ──────────────────────────────────────
+        const SEVERITY_COLORS = {
+            critical: { fill: '#dc2626', border: '#7f1d1d', opacity: 0.6 },
+            high: { fill: '#f97316', border: '#7c2d12', opacity: 0.5 },
+            medium: { fill: '#facc15', border: '#78350f', opacity: 0.5 },
+            low: { fill: '#22c55e', border: '#064e3b', opacity: 0.4 },
+        };
+        const DEFAULT_COLOR = { fill: '#10b981', border: '#059669', opacity: 0.4 };
+
+        function getSeverityColor(severity) {
+            if (!severity) return DEFAULT_COLOR;
+            const key = severity.toLowerCase();
+            return SEVERITY_COLORS[key] || DEFAULT_COLOR;
+        }
+
+        function severityClass(severity) {
+            if (!severity) return 'sev-unknown';
+            const map = {
+                'critical': 'sev-critical',
+                'high': 'sev-high',
+                'medium': 'sev-medium',
+                'low': 'sev-low'
+            };
+            return map[severity.toLowerCase()] || 'sev-unknown';
+        }
+
         // ─── Helpers ──────────────────────────────────────────────────────
         const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
@@ -846,7 +881,6 @@
         }
 
         function resetFilters() {
-            // Reset to EMPTY → show ALL spills
             document.getElementById('f-from').value = '';
             document.getElementById('f-to').value = '';
             closeDetail();
@@ -901,6 +935,7 @@
                     <span class="c-id">${s.id}</span>
                     <div class="c-name">${s.name}</div>
                     <div class="c-meta">
+                        <span class="c-severity ${severityClass(s.severity)}">${s.severity || 'unknown'}</span>
                         ${s.region ? `<span>📍 ${s.region}</span>` : ''}
                         <span>📅 ${fmtDate(s.spill_date)}</span>
                         <span>📐 ${fmtArea(s.area_km2)}</span>
@@ -919,27 +954,30 @@
             const bounds = L.latLngBounds([]);
 
             records.forEach(s => {
+                const color = getSeverityColor(s.severity);
                 const layer = L.geoJSON({
                     type: 'Feature',
                     geometry: s.geometry
                 }, {
                     style: {
-                        color: '#059669',
+                        color: color.border,
                         weight: 1.5,
-                        fillColor: '#10b981',
-                        fillOpacity: 0.4,
+                        fillColor: color.fill,
+                        fillOpacity: color.opacity,
                         opacity: 0.85,
                     }
                 })
                     .bindTooltip(
-                        `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}`,
+                        `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}<br />Severity: ${s.severity || 'unknown'}`,
                         { sticky: true, className: 'oil-tip' }
                     )
                     .on('click', () => selectSpill(s.id))
                     .addTo(map);
 
                 layers[s.id] = layer;
-                bounds.extend(layer.getBounds());
+                if (layer.getBounds) {
+                    bounds.extend(layer.getBounds());
+                }
             });
 
             if (bounds.isValid()) {
@@ -953,7 +991,11 @@
             if (selId) {
                 document.getElementById(`card-${selId}`)?.classList.remove('sel');
                 if (layers[selId]) {
-                    layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+                    const color = getSeverityColor(lastRecords.find(r => r.id === selId)?.severity);
+                    layers[selId].setStyle({
+                        fillOpacity: color.opacity,
+                        weight: 1.5
+                    });
                 }
             }
 
@@ -967,7 +1009,7 @@
 
             const layer = layers[id];
             if (layer) {
-                layer.setStyle({ fillOpacity: 0.7, weight: 2.5 });
+                layer.setStyle({ fillOpacity: 0.75, weight: 2.5 });
                 layer.bringToFront();
             }
 
@@ -979,16 +1021,19 @@
         function showDetail(s) {
             document.getElementById('dc-title').textContent = s.name;
 
-            document.getElementById('dc-body').innerHTML = `
+            let html = `
                 <div class="dc-row"><span class="dc-l">ID</span><span class="dc-v blue">${s.id}</span></div>
+                <div class="dc-row"><span class="dc-l">Severity</span><span class="dc-v"><span class="c-severity ${severityClass(s.severity)}">${s.severity || 'unknown'}</span></span></div>
                 ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span><span class="dc-v">${s.region}</span></div>` : ''}
                 <div class="dc-row"><span class="dc-l">Date</span><span class="dc-v">${fmtDate(s.spill_date)}</span></div>
                 <div class="dc-row"><span class="dc-l">Area</span><span class="dc-v">${fmtArea(s.area_km2)}</span></div>
                 ${s.source ? `<div class="dc-row"><span class="dc-l">Source</span><span class="dc-v">${s.source}</span></div>` : ''}
                 ${s.vessel ? `<div class="dc-row"><span class="dc-l">Vessel</span><span class="dc-v">${s.vessel}</span></div>` : ''}
                 ${s.oil_type ? `<div class="dc-row"><span class="dc-l">Oil type</span><span class="dc-v">${s.oil_type}</span></div>` : ''}
+                ${s.status ? `<div class="dc-row"><span class="dc-l">Status</span><span class="dc-v">${s.status}</span></div>` : ''}
                 ${s.shapefile_name ? `<div class="dc-row"><span class="dc-l">File</span><span class="dc-v mono">${s.shapefile_name}</span></div>` : ''}
             `;
+            document.getElementById('dc-body').innerHTML = html;
 
             document.getElementById('dc-zoom').onclick = () => {
                 const l = layers[s.id];
@@ -1005,14 +1050,17 @@
             if (selId) {
                 document.getElementById(`card-${selId}`)?.classList.remove('sel');
                 if (layers[selId]) {
-                    layers[selId].setStyle({ fillOpacity: 0.4, weight: 1.5 });
+                    const color = getSeverityColor(lastRecords.find(r => r.id === selId)?.severity);
+                    layers[selId].setStyle({
+                        fillOpacity: color.opacity,
+                        weight: 1.5
+                    });
                 }
                 selId = null;
             }
         }
 
         // ─── Init ──────────────────────────────────────────────────────────
-        // Load all spills by default (dates are empty)
         applyFilters();
     </script>
 </body>
