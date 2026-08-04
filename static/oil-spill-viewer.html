@@ -372,35 +372,7 @@
             font-size: 10px;
             color: #8a9fb0;
         }
-        .c-severity {
-            display: inline-block;
-            padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .sev-critical {
-            background: #7f1d1d;
-            color: #fca5a5;
-        }
-        .sev-high {
-            background: #7c2d12;
-            color: #fdba74;
-        }
-        .sev-medium {
-            background: #78350f;
-            color: #fcd34d;
-        }
-        .sev-low {
-            background: #064e3b;
-            color: #6ee7b7;
-        }
-        .sev-unknown {
-            background: #1b2336;
-            color: #6a7f9a;
-        }
+        /* severity removed – no more .c-severity */
 
         /* ─── Empty / error states ─── */
         .empty {
@@ -804,7 +776,7 @@
         let selId = null;
         let lastRecords = [];
 
-        // ─── Severity color mapping ──────────────────────────────────────
+        // ─── Severity color mapping (internal, not displayed) ──────────
         const SEVERITY_COLORS = {
             critical: { fill: '#dc2626', border: '#7f1d1d', opacity: 0.6 },
             high: { fill: '#f97316', border: '#7c2d12', opacity: 0.5 },
@@ -817,17 +789,6 @@
             if (!severity) return DEFAULT_COLOR;
             const key = severity.toLowerCase();
             return SEVERITY_COLORS[key] || DEFAULT_COLOR;
-        }
-
-        function severityClass(severity) {
-            if (!severity) return 'sev-unknown';
-            const map = {
-                'critical': 'sev-critical',
-                'high': 'sev-high',
-                'medium': 'sev-medium',
-                'low': 'sev-low'
-            };
-            return map[severity.toLowerCase()] || 'sev-unknown';
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────
@@ -935,7 +896,6 @@
                     <span class="c-id">${s.id}</span>
                     <div class="c-name">${s.name}</div>
                     <div class="c-meta">
-                        <span class="c-severity ${severityClass(s.severity)}">${s.severity || 'unknown'}</span>
                         ${s.region ? `<span>📍 ${s.region}</span>` : ''}
                         <span>📅 ${fmtDate(s.spill_date)}</span>
                         <span>📐 ${fmtArea(s.area_km2)}</span>
@@ -968,7 +928,7 @@
                     }
                 })
                     .bindTooltip(
-                        `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}<br />Severity: ${s.severity || 'unknown'}`,
+                        `<strong>${s.name}</strong><br />${s.region || ''} ${fmtDate(s.spill_date)} · ${fmtArea(s.area_km2)}`,
                         { sticky: true, className: 'oil-tip' }
                     )
                     .on('click', () => selectSpill(s.id))
@@ -1023,7 +983,6 @@
 
             let html = `
                 <div class="dc-row"><span class="dc-l">ID</span><span class="dc-v blue">${s.id}</span></div>
-                <div class="dc-row"><span class="dc-l">Severity</span><span class="dc-v"><span class="c-severity ${severityClass(s.severity)}">${s.severity || 'unknown'}</span></span></div>
                 ${s.region ? `<div class="dc-row"><span class="dc-l">Region</span><span class="dc-v">${s.region}</span></div>` : ''}
                 <div class="dc-row"><span class="dc-l">Date</span><span class="dc-v">${fmtDate(s.spill_date)}</span></div>
                 <div class="dc-row"><span class="dc-l">Area</span><span class="dc-v">${fmtArea(s.area_km2)}</span></div>

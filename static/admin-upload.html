@@ -6,8 +6,7 @@
   <title>Oil Spill Admin — Upload Shapefiles</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    /* ... (same as before, unchanged) ... */
-    /* I'll include the full style again for completeness */
+    /* (same as before – unchanged) */
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -187,7 +186,7 @@
 <div class="login-wrap" id="login-wrap">
   <div class="login-icon">🔒</div>
   <div class="login-title">Admin Login</div>
-  <div class="login-sub">Sign in to upload or manage spill shapefiles</div>
+  <div class="login-sub">Sign in to upload or manage shapefiles</div>
   <div class="err-msg" id="login-err"></div>
   <div class="field">
     <label class="fl">Username</label>
@@ -450,10 +449,8 @@ function updateBatchSummary() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// EXTRACT SPILL DATE FROM ZIP'S .dbf (client-side)
+// EXTRACT SPILL DATE FROM ZIP's .dbf (client-side)
 // ─────────────────────────────────────────────────────────────
-// Field names we consider likely to hold the spill/incident date.
-// Checked in priority order (case-insensitive).
 const DATE_FIELD_NAME_HINTS = [
   'spill_date','spilldate','date','event_date','eventdate',
   'incident_d','incidentdate','occurred','obs_date','obsdate','img_date','imgdate'
@@ -463,10 +460,8 @@ function parseDbfDate(str) {
   if (!str) return null;
   const s = str.trim();
   if (!s) return null;
-  // DBF "D" type: YYYYMMDD
   let m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  // Common text formats: YYYY-MM-DD or MM/DD/YYYY
   m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return s;
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -474,15 +469,12 @@ function parseDbfDate(str) {
   return null;
 }
 
-// Reads a .dbf ArrayBuffer and returns an ISO date string (YYYY-MM-DD) or null.
 function extractDateFromDbfBuffer(buffer) {
   const view = new DataView(buffer);
   const bytes = new Uint8Array(buffer);
   const headerSize = view.getUint16(8, true);
   const recordSize = view.getUint16(10, true);
 
-  // Parse field descriptors (32 bytes each, starting at offset 32,
-  // terminated by 0x0D).
   const fields = [];
   let offset = 32;
   while (offset < headerSize - 1) {
@@ -500,25 +492,21 @@ function extractDateFromDbfBuffer(buffer) {
   }
   if (fields.length === 0) return null;
 
-  // Rank candidate fields: prefer real Date-type fields, then any field
-  // whose name matches a known hint, in hint priority order.
   let candidates = fields.filter(f => f.type === 'D');
   for (const hint of DATE_FIELD_NAME_HINTS) {
     const match = fields.find(f => f.name.toLowerCase() === hint);
     if (match && !candidates.includes(match)) candidates.push(match);
   }
   if (candidates.length === 0) {
-    // Loose fallback: any field with "date" in the name.
     candidates = fields.filter(f => f.type !== 'N' && /date/i.test(f.name));
   }
   if (candidates.length === 0) return null;
 
-  // Read the first non-deleted record.
   let recOffset = headerSize;
   const decoder = new TextDecoder('ascii');
   while (recOffset + recordSize <= bytes.length) {
     const deleteFlag = bytes[recOffset];
-    if (deleteFlag !== 0x2A) { // not marked deleted
+    if (deleteFlag !== 0x2A) {
       let fieldOffset = recOffset + 1;
       const fieldValues = {};
       for (const f of fields) {
@@ -530,15 +518,13 @@ function extractDateFromDbfBuffer(buffer) {
         const parsed = parseDbfDate(fieldValues[c.name]);
         if (parsed) return parsed;
       }
-      break; // only inspect the first record
+      break;
     }
     recOffset += recordSize;
   }
   return null;
 }
 
-// Opens the .zip, finds the first .dbf inside, and extracts a date.
-// Throws an Error with a user-facing message if nothing usable is found.
 async function extractDateFromZip(file) {
   if (typeof JSZip === 'undefined') {
     throw new Error('Zip parser failed to load — check your connection');
@@ -591,7 +577,6 @@ async function uploadAllFiles() {
   btn.disabled = true;
   btn.textContent = 'Checking duplicates…';
 
-  // Fetch existing records for duplicate check
   let existingNames = new Set();
   try {
     const res = await fetch(`${API_BASE}/admin/spills`, {
@@ -656,8 +641,6 @@ async function uploadAllFiles() {
     const i = item.index;
     const statusEl = document.getElementById(`fstatus-${i}`);
 
-    // Resolve the date to send: an explicit form value wins; otherwise
-    // pull it straight out of this file's .dbf.
     let fileDate = commonMeta.date;
     if (!fileDate) {
       if (statusEl) {
@@ -672,7 +655,7 @@ async function uploadAllFiles() {
           statusEl.textContent = '✗ ' + (dateErr.message || 'No date found in shapefile');
           statusEl.className = 'fstatus err';
         }
-        continue; // skip upload — no date available for this file
+        continue;
       }
     }
 
@@ -769,7 +752,6 @@ async function deleteAllRecords() {
     return;
   }
 
-  // First, fetch current records to get count
   let records;
   try {
     const res = await fetch(`${API_BASE}/admin/spills`, {
@@ -787,7 +769,6 @@ async function deleteAllRecords() {
     return;
   }
 
-  // Ask for confirmation
   if (!confirm(`Are you sure you want to delete ALL ${records.length} records? This action cannot be undone.`)) {
     return;
   }
@@ -824,13 +805,11 @@ async function deleteAllRecords() {
     btn.textContent = '🗑 Delete All';
   }, 3000);
 
-  // Refresh the list
   await loadRecords();
-  // Also reset the duplicate cache if needed (the next upload will fetch fresh list)
 }
 
 // ─────────────────────────────────────────────────────────────
-// RECORDS TABLE
+// RECORDS TABLE (sorted by date, newest first)
 // ─────────────────────────────────────────────────────────────
 async function loadRecords() {
   const tbody = document.getElementById('rec-tbody');
@@ -845,7 +824,14 @@ async function loadRecords() {
     });
     if (res.status === 401) { logout(); return; }
     if (!res.ok) throw new Error('Failed to load records');
-    const records = await res.json();
+    let records = await res.json();
+
+    // ★ Sort by spill_date descending (newest first) ★
+    records.sort((a, b) => {
+      if (!a.spill_date) return 1;
+      if (!b.spill_date) return -1;
+      return new Date(b.spill_date) - new Date(a.spill_date);
+    });
 
     document.getElementById('rec-badge').textContent = `${records.length} records`;
 
