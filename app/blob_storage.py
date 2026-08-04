@@ -20,6 +20,7 @@ the storage layer). To avoid handing out that raw URL, our own
 fetches+streams the bytes server-side rather than redirecting the client
 to the blob URL directly.
 """
+import os
 import requests
 import vercel_blob
 
@@ -35,7 +36,11 @@ def upload_zip(pathname: str, data: bytes) -> str:
         result = vercel_blob.put(
             pathname,
             data,
-            {"addRandomSuffix": "true", "contentType": "application/zip"},
+            {
+                "addRandomSuffix": "true",
+                "contentType": "application/zip",
+                "access": "private",          # <-- crucial for private stores
+            },
         )
     except Exception as e:
         raise BlobStorageError(f"Could not upload to Vercel Blob: {e}")
@@ -57,8 +62,15 @@ def delete_zip(url: str) -> None:
 def fetch_zip_bytes(url: str) -> bytes:
     """Fetches a blob's raw bytes so we can stream it back through our own
     authenticated endpoint instead of exposing the public blob URL."""
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN")
+    if not token:
+        raise BlobStorageError("BLOB_READ_WRITE_TOKEN not set in environment")
     try:
-        resp = requests.get(url, timeout=30)
+        resp = requests.get(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
         resp.raise_for_status()
     except Exception as e:
         raise BlobStorageError(f"Could not fetch file from Vercel Blob: {e}")
