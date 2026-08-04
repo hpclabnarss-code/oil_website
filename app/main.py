@@ -357,7 +357,13 @@ def admin_download_shapefile(spill_id: str, token: str = Depends(get_token_from_
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{record.name}.zip"'},
     )
-
+@app.get("/api/debug/env")
+def debug_env():
+    import os
+    return {
+        "BLOB_READ_WRITE_TOKEN": os.getenv("BLOB_READ_WRITE_TOKEN", "NOT SET"),
+        "BLOB_STORE_ID": os.getenv("BLOB_STORE_ID", "NOT SET"),
+    }
 # ============================================================================
 # ERROR HANDLING
 # ============================================================================
