@@ -1,5 +1,5 @@
 """
-Vercel Blob storage helpers for a public store – supports automatic Vercel variables.
+Vercel Blob storage helpers – works with automatically linked stores.
 """
 import os
 import requests
@@ -10,39 +10,36 @@ class BlobStorageError(Exception):
     pass
 
 
-def _get_blob_credentials():
-    """Return (store_id, token) from environment, trying multiple variable names."""
-    # Try the standard names first
-    store_id = os.environ.get("BLOB_STORE_ID")
-    token = os.environ.get("BLOB_READ_WRITE_TOKEN")
+def _ensure_blob_env():
+    """
+    Ensure the required environment variables are set for the SDK.
+    It checks both standard and automatically prefixed variable names.
+    """
+    store_id = os.environ.get("BLOB_STORE_ID") or os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_STORE_ID")
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN") or os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_READ_WRITE_TOKEN")
 
-    # If not found, try the automatic "WEBHOOK_PUBLIC_KEY" prefixed ones
-    if not store_id:
-        store_id = os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_STORE_ID")
-    if not token:
-        token = os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_READ_WRITE_TOKEN")
+    if not store_id or not token:
+        raise BlobStorageError(
+            "Missing Blob credentials. Neither BLOB_STORE_ID/BLOB_READ_WRITE_TOKEN "
+            "nor BLOB_WEBHOOK_PUBLIC_KEY_STORE_ID/BLOB_WEBHOOK_PUBLIC_KEY_READ_WRITE_TOKEN are set."
+        )
 
-    return store_id, token
+    # Set them so the SDK can find them
+    os.environ["BLOB_STORE_ID"] = store_id
+    os.environ["BLOB_READ_WRITE_TOKEN"] = token
 
 
 def upload_zip(pathname: str, data: bytes) -> str:
-    store_id, token = _get_blob_credentials()
-    if not token or not store_id:
-        raise BlobStorageError(
-            "Missing BLOB_STORE_ID or BLOB_READ_WRITE_TOKEN in environment. "
-            "Please set them manually or ensure your Blob store is correctly linked."
-        )
-
-    # Explicitly set the store ID in the SDK options (some versions require this)
+    _ensure_blob_env()
     try:
+        # No extra options – the SDK reads BLOB_STORE_ID from env
         result = vercel_blob.put(
             pathname,
             data,
             {
                 "addRandomSuffix": "true",
                 "contentType": "application/zip",
-                "storeId": store_id,       # <-- explicitly provide the store ID
-                # No "access" key – defaults to public
+                # "access" omitted – defaults to public for a public store
             }
         )
     except Exception as e:
@@ -55,18 +52,14 @@ def upload_zip(pathname: str, data: bytes) -> str:
 
 
 def delete_zip(url: str) -> None:
-    store_id, token = _get_blob_credentials()
-    if not token:
-        return  # silently fail
     try:
-        # The SDK's delete() also needs the store ID? Usually it infers from env.
         vercel_blob.delete([url])
     except Exception:
         pass
 
 
 def fetch_zip_bytes(url: str) -> bytes:
-    # For public blobs, no auth header is needed.
+    # Public blobs don't need auth
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
