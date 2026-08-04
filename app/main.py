@@ -9,79 +9,49 @@ Oil Spill Viewer – Full Backend with Shapefile Upload Support
 
 import json
 import os
-import shutil
-import tempfile
-import zipfile
 from datetime import date, datetime
 from typing import Optional, List
 from pathlib import Path
+import uuid
 
 from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Form, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-import sqlalchemy as sa
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Text, Integer
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
+from app.database import engine, Base, get_db
+from app.models import SpillRecord
 from app.geo_utils import parse_shapefile_zip, ShapefileParseError
-import uuid
+from app.blob_storage import upload_zip, delete_zip, fetch_zip_bytes, BlobStorageError
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./oil_spill.db")
 STATIC_DIR = Path("static")
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
-# ============================================================================
-# DATABASE SETUP
-# ============================================================================
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-
-class SpillRecord(Base):
-    __tablename__ = "spills"
-
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(200), nullable=False)
-    region = Column(String(100))
-    spill_date = Column(String(20), nullable=False)
-    severity = Column(String(20))          # high / medium / low / critical
-    source = Column(String(50))            # Platform / Ship / Pipeline
-    vessel = Column(String(100))
-    oil_type = Column(String(50))
-    status = Column(String(50), default="Active")
-    area_km2 = Column(Float)
-    geometry_json = Column(Text)           # GeoJSON geometry string
-    shapefile_name = Column(String(200))   # stored ZIP filename on disk
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "region": self.region,
-            "spill_date": self.spill_date,
-            "severity": self.severity,
-            "source": self.source,
-            "vessel": self.vessel,
-            "oil_type": self.oil_type,
-            "status": self.status,
-            "area_km2": self.area_km2,
-            "geometry": json.loads(self.geometry_json) if self.geometry_json else None,
-            "shapefile_name": self.shapefile_name,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-        }
-
-
+# Creates tables on the DB pointed to by DATABASE_URL (Postgres in prod,
+# local sqlite fallback for dev — see app/database.py)
 Base.metadata.create_all(bind=engine)
+
+
+def record_to_dict(record: SpillRecord) -> dict:
+    return {
+        "id": record.id,
+        "name": record.name,
+        "region": record.region,
+        "spill_date": record.spill_date.isoformat() if record.spill_date else None,
+        "severity": record.severity,
+        "source": record.source,
+        "vessel": record.vessel,
+        "oil_type": record.oil_type,
+        "status": record.status,
+        "area_km2": record.area_km2,
+        "geometry": json.loads(record.geometry_geojson) if record.geometry_geojson else None,
+        "shapefile_name": record.shapefile_name,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+    }
+
+
 
 # ============================================================================
 # FASTAPI APP
@@ -111,12 +81,7 @@ app.add_middleware(
 # ============================================================================
 # DEPENDENCIES
 # ============================================================================
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# get_db is imported from app.database above.
 
 
 # Simple admin auth (hardcoded for dev – override with env vars)
@@ -207,9 +172,9 @@ def list_spills(
     query = db.query(SpillRecord)
 
     if date_from:
-        query = query.filter(SpillRecord.spill_date >= str(date_from))
+        query = query.filter(SpillRecord.spill_date >= date_from)
     if date_to:
-        query = query.filter(SpillRecord.spill_date <= str(date_to))
+        query = query.filter(SpillRecord.spill_date <= date_to)
     if severity:
         levels = [l.strip().lower() for l in severity.split(",") if l.strip()]
         query = query.filter(SpillRecord.severity.in_(levels))
@@ -219,7 +184,7 @@ def list_spills(
         query = query.filter(SpillRecord.region == region)
 
     records = query.all()
-    return [r.to_dict() for r in records]
+    return [record_to_dict(r) for r in records]
 
 
 @app.get("/api/spills/{spill_id}")
@@ -227,7 +192,7 @@ def get_spill(spill_id: str, db: Session = Depends(get_db)):
     record = db.query(SpillRecord).filter(SpillRecord.id == spill_id).first()
     if not record:
         raise HTTPException(404, "Spill not found")
-    return record.to_dict()
+    return record_to_dict(record)
 
 
 @app.get("/api/meta/sources")
@@ -309,25 +274,33 @@ async def admin_upload(
     if not geojson_geom:
         raise HTTPException(400, "Shapefile has no valid geometry")
 
-    # Store the ZIP file on disk
-    stored_filename = f"{uuid.uuid4()}_{file.filename}"
-    stored_path = UPLOAD_DIR / stored_filename
-    with open(stored_path, "wb") as f:
-        f.write(zip_bytes)
+    # spill_date column is a real Date type — parse the "YYYY-MM-DD" string
+    try:
+        parsed_spill_date = datetime.strptime(final_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(400, f"Could not parse spill date: {final_date!r}")
+
+    # Store the ZIP in Vercel Blob (local disk is read-only on Vercel)
+    try:
+        blob_url = upload_zip(file.filename, zip_bytes)
+    except BlobStorageError as e:
+        raise HTTPException(502, str(e))
 
     # Create database record
     record = SpillRecord(
+        id=f"OS-{parsed_spill_date.year}-{uuid.uuid4().hex[:6].upper()}",
         name=final_name,
         region=final_region,
-        spill_date=final_date,
+        spill_date=parsed_spill_date,
         severity=final_severity,
         source="Ship",  # Could be auto-detected
         vessel=final_vessel,
         oil_type=final_oil_type,
         status=final_status,
         area_km2=final_area,
-        geometry_json=json.dumps(geojson_geom),
-        shapefile_name=stored_filename,
+        geometry_geojson=json.dumps(geojson_geom),
+        shapefile_name=file.filename,
+        stored_zip_url=blob_url,
     )
     db.add(record)
     db.commit()
@@ -337,7 +310,7 @@ async def admin_upload(
         "id": record.id,
         "message": f"Uploaded {file.filename} successfully",
         "auto_detected": auto_meta,
-        "record": record.to_dict(),
+        "record": record_to_dict(record),
     }
 
 
@@ -346,7 +319,7 @@ def admin_list_spills(token: str = Depends(get_token_from_header), db: Session =
     if not verify_token(token):
         raise HTTPException(401, "Invalid or expired token")
     records = db.query(SpillRecord).all()
-    return [r.to_dict() for r in records]
+    return [record_to_dict(r) for r in records]
 
 
 @app.delete("/api/admin/spills/{spill_id}")
@@ -358,11 +331,9 @@ def admin_delete_spill(spill_id: str, token: str = Depends(get_token_from_header
     if not record:
         raise HTTPException(404, "Spill not found")
 
-    # Delete the stored ZIP file
-    if record.shapefile_name:
-        zip_path = UPLOAD_DIR / record.shapefile_name
-        if zip_path.exists():
-            zip_path.unlink()
+    # Delete the stored ZIP from Vercel Blob (never blocks record deletion)
+    if record.stored_zip_url:
+        delete_zip(record.stored_zip_url)
 
     db.delete(record)
     db.commit()
@@ -377,17 +348,18 @@ def admin_download_shapefile(spill_id: str, token: str = Depends(get_token_from_
     record = db.query(SpillRecord).filter(SpillRecord.id == spill_id).first()
     if not record:
         raise HTTPException(404, "Spill not found")
-    if not record.shapefile_name:
+    if not record.stored_zip_url:
         raise HTTPException(404, "No shapefile stored for this record")
 
-    zip_path = UPLOAD_DIR / record.shapefile_name
-    if not zip_path.exists():
-        raise HTTPException(404, "Shapefile file missing on disk")
+    try:
+        zip_bytes = fetch_zip_bytes(record.stored_zip_url)
+    except BlobStorageError as e:
+        raise HTTPException(502, str(e))
 
-    return FileResponse(
-        path=str(zip_path),
-        filename=f"{record.name}.zip",
+    return Response(
+        content=zip_bytes,
         media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{record.name}.zip"'},
     )
 
 
