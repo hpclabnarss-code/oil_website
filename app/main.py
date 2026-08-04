@@ -9,6 +9,7 @@ Oil Spill Viewer – Full Backend with Shapefile Upload Support
 
 import json
 import os
+import re
 from datetime import date, datetime
 from typing import Optional, List
 from pathlib import Path
@@ -107,6 +108,21 @@ def get_current_user(token: str = Depends(get_token_from_header)):
 # ============================================================================
 # HELPERS
 # ============================================================================
+def parse_date_from_filename(filename: str) -> Optional[str]:
+    """
+    Extract a date (YYYY-MM-DD) from a filename that contains 8 consecutive digits.
+    E.g., 'Map_os_20141004_eg.zip' -> '2014-10-04'
+    """
+    match = re.search(r'(\d{8})', filename)
+    if match:
+        date_str = match.group(1)  # YYYYMMDD
+        try:
+            dt = datetime.strptime(date_str, "%Y%m%d")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    return None
+
 def record_to_dict(record: SpillRecord) -> dict:
     return {
         "id": record.id,
@@ -238,26 +254,45 @@ async def admin_upload(
         raise HTTPException(400, f"Failed to parse shapefile: {str(e)}")
     if not parsed.get("geometry"):
         raise HTTPException(400, "Shapefile contains no features")
+
+    # Auto-detect metadata from shapefile
     auto_meta = guess_spill_metadata(parsed)
+
+    # Try to extract date from filename (e.g., "Map_os_20141004_eg.zip" -> "2014-10-04")
+    date_from_filename = parse_date_from_filename(file.filename)
+
+    # Use provided values, falling back to auto-detected, then filename, then today
     final_name = name or file.filename.replace(".zip", "")
-    final_date = spill_date or auto_meta.get("spill_date") or datetime.now().strftime("%Y-%m-%d")
+    final_date = (
+        spill_date
+        or auto_meta.get("spill_date")
+        or date_from_filename
+        or datetime.now().strftime("%Y-%m-%d")
+    )
     final_region = region or auto_meta.get("region") or "Unknown"
     final_vessel = vessel or auto_meta.get("vessel") or "N/A"
     final_oil_type = oil_type or auto_meta.get("oil_type") or "Unknown"
     final_status = status or auto_meta.get("status") or "Active"
     final_severity = auto_meta.get("severity") or "medium"
     final_area = auto_meta.get("area_km2") or 0.0
+
     geojson_geom = parsed["geometry"]
     if not geojson_geom:
         raise HTTPException(400, "Shapefile has no valid geometry")
+
+    # Parse final_date (YYYY-MM-DD) into a date object
     try:
         parsed_spill_date = datetime.strptime(final_date, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(400, f"Could not parse spill date: {final_date!r}")
+
+    # Store the ZIP in Vercel Blob
     try:
         blob_url = upload_zip(file.filename, zip_bytes)
     except BlobStorageError as e:
         raise HTTPException(502, str(e))
+
+    # Create database record
     record = SpillRecord(
         id=f"OS-{parsed_spill_date.year}-{uuid.uuid4().hex[:6].upper()}",
         name=final_name,
@@ -276,6 +311,7 @@ async def admin_upload(
     db.add(record)
     db.commit()
     db.refresh(record)
+
     return {
         "id": record.id,
         "message": f"Uploaded {file.filename} successfully",
