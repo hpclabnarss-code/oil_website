@@ -372,7 +372,6 @@
             font-size: 10px;
             color: #8a9fb0;
         }
-        /* severity removed – no more .c-severity */
 
         /* ─── Empty / error states ─── */
         .empty {
@@ -683,11 +682,13 @@
                     <div class="date-duo">
                         <div>
                             <label class="fl">From</label>
-                            <input type="date" id="f-from" value="" placeholder="yyyy-mm-dd" />
+                            <!-- Default: 2020-01-01 -->
+                            <input type="date" id="f-from" value="2020-01-01" />
                         </div>
                         <div>
                             <label class="fl">To</label>
-                            <input type="date" id="f-to" value="" placeholder="yyyy-mm-dd" />
+                            <!-- Default: 2021-01-01 -->
+                            <input type="date" id="f-to" value="2021-01-01" />
                         </div>
                     </div>
                 </div>
@@ -698,7 +699,8 @@
                 </div>
 
                 <div class="hint">
-                    💡 Leave dates empty to show <strong>all</strong> spills.
+                    💡 Default range: <strong>1 Jan 2020 – 1 Jan 2021</strong>.<br />
+                    Leave dates empty to show <strong>all</strong> spills.
                 </div>
             </div>
 
