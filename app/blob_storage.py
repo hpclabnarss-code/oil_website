@@ -1,68 +1,72 @@
 """
-Vercel Blob storage helpers – works with automatically linked stores.
+Vercel Blob storage using the raw HTTP API (public store).
 """
 import os
 import requests
-import vercel_blob
 
 
 class BlobStorageError(Exception):
     pass
 
 
-def _ensure_blob_env():
-    """
-    Ensure the required environment variables are set for the SDK.
-    It checks both standard and automatically prefixed variable names.
-    """
+def _get_credentials():
+    """Get store ID and token from environment (supports automatic naming)."""
     store_id = os.environ.get("BLOB_STORE_ID") or os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_STORE_ID")
     token = os.environ.get("BLOB_READ_WRITE_TOKEN") or os.environ.get("BLOB_WEBHOOK_PUBLIC_KEY_READ_WRITE_TOKEN")
-
-    if not store_id or not token:
-        raise BlobStorageError(
-            "Missing Blob credentials. Neither BLOB_STORE_ID/BLOB_READ_WRITE_TOKEN "
-            "nor BLOB_WEBHOOK_PUBLIC_KEY_STORE_ID/BLOB_WEBHOOK_PUBLIC_KEY_READ_WRITE_TOKEN are set."
-        )
-
-    # Set them so the SDK can find them
-    os.environ["BLOB_STORE_ID"] = store_id
-    os.environ["BLOB_READ_WRITE_TOKEN"] = token
+    return store_id, token
 
 
 def upload_zip(pathname: str, data: bytes) -> str:
-    _ensure_blob_env()
-    try:
-        # No extra options – the SDK reads BLOB_STORE_ID from env
-        result = vercel_blob.put(
-            pathname,
-            data,
-            {
-                "addRandomSuffix": "true",
-                "contentType": "application/zip",
-                # "access" omitted – defaults to public for a public store
-            }
-        )
-    except Exception as e:
-        raise BlobStorageError(f"Could not upload to Vercel Blob: {e}")
+    store_id, token = _get_credentials()
+    if not store_id or not token:
+        raise BlobStorageError("Missing Blob credentials in environment.")
 
-    url = result.get("url")
-    if not url:
-        raise BlobStorageError("Vercel Blob did not return a URL")
-    return url
+    # Vercel Blob API: PUT to /{pathname} with query param for random suffix
+    url = f"https://blob.vercel-storage.com/{pathname}?addRandomSuffix=true"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "x-blob-store-id": store_id,
+        "Content-Type": "application/zip",
+    }
+
+    try:
+        resp = requests.put(url, headers=headers, data=data, timeout=30)
+        resp.raise_for_status()
+        # The API returns a JSON with the blob URL
+        result = resp.json()
+        blob_url = result.get("url")
+        if not blob_url:
+            raise BlobStorageError("No URL returned from Blob API")
+        return blob_url
+    except requests.RequestException as e:
+        # Log the response body for debugging
+        error_detail = ""
+        if e.response:
+            error_detail = f" (status {e.response.status_code}): {e.response.text}"
+        raise BlobStorageError(f"Could not upload to Vercel Blob: {e}{error_detail}")
 
 
 def delete_zip(url: str) -> None:
+    store_id, token = _get_credentials()
+    if not token:
+        return
     try:
-        vercel_blob.delete([url])
+        # DELETE the blob using its URL (requires token)
+        resp = requests.delete(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        # Ignore failures
     except Exception:
         pass
 
 
 def fetch_zip_bytes(url: str) -> bytes:
-    # Public blobs don't need auth
+    # Public store – no auth required
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
-    except Exception as e:
-        raise BlobStorageError(f"Could not fetch file from Vercel Blob: {e}")
-    return resp.content
+        return resp.content
+    except requests.RequestException as e:
+        raise BlobStorageError(f"Could not fetch file: {e}")
