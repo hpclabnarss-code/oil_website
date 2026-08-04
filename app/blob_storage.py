@@ -1,5 +1,5 @@
 """
-Vercel Blob storage helpers using the official Python SDK (public store).
+Vercel Blob storage helpers for a public store.
 """
 import os
 import requests
@@ -11,20 +11,18 @@ class BlobStorageError(Exception):
 
 
 def upload_zip(pathname: str, data: bytes) -> str:
-    """Uploads zip bytes to Vercel Blob (public store) and returns the URL."""
     token = os.environ.get("BLOB_READ_WRITE_TOKEN")
     if not token:
         raise BlobStorageError("BLOB_READ_WRITE_TOKEN not set in environment")
 
     try:
-        # No "access" key – defaults to public, which matches the store
         result = vercel_blob.put(
             pathname,
             data,
             {
                 "addRandomSuffix": "true",
                 "contentType": "application/zip",
-                # "access": "public" is optional, but we omit it to avoid errors
+                # No "access" – defaults to public (or you can add "access": "public")
             }
         )
     except Exception as e:
@@ -37,7 +35,6 @@ def upload_zip(pathname: str, data: bytes) -> str:
 
 
 def delete_zip(url: str) -> None:
-    """Deletes a blob by URL using the SDK."""
     try:
         vercel_blob.delete([url])
     except Exception:
@@ -45,8 +42,7 @@ def delete_zip(url: str) -> None:
 
 
 def fetch_zip_bytes(url: str) -> bytes:
-    """Fetches a public blob's raw bytes – no auth needed."""
-    # For public blobs, no Authorization header is required.
+    # For public blobs, no auth header is needed.
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
