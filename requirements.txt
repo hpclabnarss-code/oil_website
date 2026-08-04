@@ -5,5 +5,4 @@ pyshp>=2.3
 python-multipart>=0.0.9
 pyproj>=3.6
 psycopg2-binary
-vercel_blob>=0.4.2
 requests>=2.31
