@@ -2,7 +2,7 @@
 Oil Spill Viewer – Full Backend with Shapefile Upload Support
 ------------------------------------------------------------
 - Uses SQLite for persistent storage
-- Parses shapefiles from uploaded ZIP archives using GeoPandas
+- Parses shapefiles from uploaded ZIP archives using pyshp + pyproj (app/geo_utils.py)
 - Implements all CRUD endpoints
 - Serves static frontend
 """
@@ -24,8 +24,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine, Column, String, Float, DateTime, Text, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-import geopandas as gpd
-from shapely.geometry import shape, mapping
+from app.geo_utils import parse_shapefile_zip, ShapefileParseError
 import uuid
 
 # ============================================================================
@@ -140,29 +139,16 @@ def get_current_user(token: str = Query(...)):
 # ============================================================================
 # SHAPEFILE PARSING HELPERS
 # ============================================================================
-def extract_shapefile_from_zip(zip_bytes: bytes) -> tuple[gpd.GeoDataFrame, str]:
-    """Extract shapefile from ZIP bytes, return GeoDataFrame and original filename."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zip_path = Path(tmpdir) / "upload.zip"
-        zip_path.write_bytes(zip_bytes)
-
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(tmpdir)
-
-        # Find .shp file
-        shp_files = list(Path(tmpdir).glob("*.shp"))
-        if not shp_files:
-            raise HTTPException(400, "No .shp file found in ZIP archive")
-
-        shp_path = shp_files[0]
-        gdf = gpd.read_file(shp_path)
-
-        # Find the base name (without extension)
-        base_name = shp_path.stem
-        return gdf, base_name
+def extract_shapefile_from_zip(zip_bytes: bytes) -> dict:
+    """Extract shapefile data from ZIP bytes using the pure-Python parser
+    (pyshp + pyproj, no GDAL/geopandas needed — see app/geo_utils.py)."""
+    try:
+        return parse_shapefile_zip(zip_bytes)
+    except ShapefileParseError as e:
+        raise HTTPException(400, str(e))
 
 
-def guess_spill_metadata(gdf: gpd.GeoDataFrame) -> dict:
+def guess_spill_metadata(parsed: dict) -> dict:
     """Attempt to auto-extract metadata from the shapefile's attributes."""
     meta = {
         "region": None,
@@ -171,67 +157,19 @@ def guess_spill_metadata(gdf: gpd.GeoDataFrame) -> dict:
         "vessel": None,
         "oil_type": None,
         "status": None,
-        "area_km2": None,
-        "spill_date": None,
+        "area_km2": parsed.get("area"),
+        "spill_date": parsed["date"].strftime("%Y-%m-%d") if parsed.get("date") else None,
     }
 
-    if gdf.empty:
-        return meta
-
-    # Try to find a date field
-    for col in gdf.columns:
-        col_lower = col.lower()
-        if any(hint in col_lower for hint in ["date", "spill", "event", "occur"]):
-            # Check first non-null value
-            for val in gdf[col].dropna():
-                if isinstance(val, (date, datetime)):
-                    meta["spill_date"] = val.strftime("%Y-%m-%d")
-                    break
-                if isinstance(val, str):
-                    # Try parsing common formats
-                    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%d-%m-%Y"):
-                        try:
-                            parsed = datetime.strptime(val, fmt)
-                            meta["spill_date"] = parsed.strftime("%Y-%m-%d")
-                            break
-                        except ValueError:
-                            continue
-                    if meta["spill_date"]:
-                        break
-            break
-
-    # Try to find area field (or compute from geometry)
-    if "area" in gdf.columns:
-        try:
-            meta["area_km2"] = float(gdf["area"].iloc[0])
-        except (ValueError, TypeError):
-            pass
-    if not meta["area_km2"] and not gdf.geometry.is_empty.all():
-        # Compute area in km² (assuming WGS84 → approximate)
-        try:
-            # Reproject to a local UTM zone or use web mercator for rough estimate
-            gdf_utm = gdf.to_crs("EPSG:3857") if gdf.crs else gdf
-            meta["area_km2"] = gdf_utm.geometry.area.sum() / 1e6
-        except Exception:
-            pass
-
-    # Try to find region / location
-    for col in gdf.columns:
-        col_lower = col.lower()
-        if any(hint in col_lower for hint in ["region", "location", "area", "place"]):
-            val = gdf[col].dropna().iloc[0] if not gdf[col].dropna().empty else None
-            if val:
-                meta["region"] = str(val)
-                break
-
-    # Try severity
-    for col in gdf.columns:
-        col_lower = col.lower()
-        if any(hint in col_lower for hint in ["sever", "impact", "magnitude"]):
-            val = gdf[col].dropna().iloc[0] if not gdf[col].dropna().empty else None
-            if val:
-                meta["severity"] = str(val).lower()
-                break
+    attrs = parsed.get("attributes") or {}
+    for key, val in attrs.items():
+        key_lower = key.lower()
+        if val in (None, ""):
+            continue
+        if meta["region"] is None and any(h in key_lower for h in ["region", "location", "place"]):
+            meta["region"] = str(val)
+        if meta["severity"] is None and any(h in key_lower for h in ["sever", "impact", "magnitude"]):
+            meta["severity"] = str(val).lower()
 
     return meta
 
@@ -332,17 +270,17 @@ async def admin_upload(
 
     # Parse shapefile from ZIP
     try:
-        gdf, base_name = extract_shapefile_from_zip(zip_bytes)
+        parsed = extract_shapefile_from_zip(zip_bytes)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(400, f"Failed to parse shapefile: {str(e)}")
 
-    if gdf.empty:
+    if not parsed.get("geometry"):
         raise HTTPException(400, "Shapefile contains no features")
 
     # Auto-detect metadata from shapefile
-    auto_meta = guess_spill_metadata(gdf)
+    auto_meta = guess_spill_metadata(parsed)
 
     # Use provided values, falling back to auto-detected
     final_name = name or file.filename.replace(".zip", "")
@@ -352,14 +290,12 @@ async def admin_upload(
     final_oil_type = oil_type or auto_meta.get("oil_type") or "Unknown"
     final_status = status or auto_meta.get("status") or "Active"
     final_severity = auto_meta.get("severity") or "medium"
-    final_area = auto_meta.get("area_km2") or gdf.geometry.area.sum() / 1e6
+    final_area = auto_meta.get("area_km2") or 0.0
 
-    # Convert geometry to GeoJSON
-    first_geom = gdf.geometry.iloc[0] if len(gdf) > 0 else None
-    if first_geom is None:
+    # Geometry already comes back as GeoJSON (WGS84) from parse_shapefile_zip
+    geojson_geom = parsed["geometry"]
+    if not geojson_geom:
         raise HTTPException(400, "Shapefile has no valid geometry")
-
-    geojson_geom = mapping(first_geom)
 
     # Store the ZIP file on disk
     stored_filename = f"{uuid.uuid4()}_{file.filename}"
