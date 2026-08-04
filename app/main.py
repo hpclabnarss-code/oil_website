@@ -1,10 +1,11 @@
 """
 Oil Spill Viewer – Full Backend with Shapefile Upload Support
 ------------------------------------------------------------
-- Uses SQLite for persistent storage
+- Uses PostgreSQL (Neon) for persistent storage
 - Parses shapefiles from uploaded ZIP archives using pyshp + pyproj (app/geo_utils.py)
 - Implements all CRUD endpoints
 - Serves static frontend
+- Stores uploaded ZIP files directly in the database (LargeBinary)
 """
 
 import json
@@ -24,7 +25,6 @@ from sqlalchemy import inspect, text
 from app.database import engine, Base, get_db
 from app.models import SpillRecord
 from app.geo_utils import parse_shapefile_zip, ShapefileParseError
-from app.blob_storage import upload_zip, delete_zip, fetch_zip_bytes, BlobStorageError
 
 # ============================================================================
 # CONFIGURATION
@@ -36,7 +36,7 @@ STATIC_DIR = Path("static")
 Base.metadata.create_all(bind=engine)
 
 # ============================================================================
-# ★ AUTO‑MIGRATION: add any missing columns (e.g., stored_zip_url)
+# ★ AUTO‑MIGRATION: add any missing columns (e.g., zip_data)
 # ============================================================================
 def _ensure_schema_updated():
     """Automatically add missing columns to spill_records."""
@@ -286,13 +286,7 @@ async def admin_upload(
     except ValueError:
         raise HTTPException(400, f"Could not parse spill date: {final_date!r}")
 
-    # Store the ZIP in Vercel Blob
-    try:
-        blob_url = upload_zip(file.filename, zip_bytes)
-    except BlobStorageError as e:
-        raise HTTPException(502, str(e))
-
-    # Create database record
+    # Create database record – store the ZIP bytes directly
     record = SpillRecord(
         id=f"OS-{parsed_spill_date.year}-{uuid.uuid4().hex[:6].upper()}",
         name=final_name,
@@ -306,7 +300,8 @@ async def admin_upload(
         area_km2=final_area,
         geometry_geojson=json.dumps(geojson_geom),
         shapefile_name=file.filename,
-        stored_zip_url=blob_url,
+        zip_data=zip_bytes,        # NEW: store the raw bytes
+        # stored_zip_url left empty
     )
     db.add(record)
     db.commit()
@@ -333,8 +328,7 @@ def admin_delete_spill(spill_id: str, token: str = Depends(get_token_from_header
     record = db.query(SpillRecord).filter(SpillRecord.id == spill_id).first()
     if not record:
         raise HTTPException(404, "Spill not found")
-    if record.stored_zip_url:
-        delete_zip(record.stored_zip_url)
+    # No blob to delete – just remove the record
     db.delete(record)
     db.commit()
     return {"message": f"Deleted {spill_id}"}
@@ -346,24 +340,23 @@ def admin_download_shapefile(spill_id: str, token: str = Depends(get_token_from_
     record = db.query(SpillRecord).filter(SpillRecord.id == spill_id).first()
     if not record:
         raise HTTPException(404, "Spill not found")
-    if not record.stored_zip_url:
-        raise HTTPException(404, "No shapefile stored for this record")
-    try:
-        zip_bytes = fetch_zip_bytes(record.stored_zip_url)
-    except BlobStorageError as e:
-        raise HTTPException(502, str(e))
+    if not record.zip_data:
+        raise HTTPException(404, "No shapefile data stored")
     return Response(
-        content=zip_bytes,
+        content=record.zip_data,
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{record.name}.zip"'},
     )
+
 @app.get("/api/debug/env")
 def debug_env():
     import os
     return {
         "BLOB_READ_WRITE_TOKEN": os.getenv("BLOB_READ_WRITE_TOKEN", "NOT SET"),
         "BLOB_STORE_ID": os.getenv("BLOB_STORE_ID", "NOT SET"),
+        "DATABASE_URL": os.getenv("DATABASE_URL", "NOT SET")[:20] + "..." if os.getenv("DATABASE_URL") else "NOT SET",
     }
+
 # ============================================================================
 # ERROR HANDLING
 # ============================================================================

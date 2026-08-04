@@ -1,31 +1,22 @@
-"""
-ORM model for a single oil spill shapefile record.
-
-Geometry is stored as a GeoJSON string. This keeps the schema database-
-agnostic (works on plain SQLite as well as Postgres) and lets the frontend
-consume it directly with Leaflet's L.geoJSON(), with no translation layer.
-"""
-import datetime
-from sqlalchemy import Column, String, Float, Date, DateTime, Text
-from .database import Base
-
+from sqlalchemy import Column, String, Date, Float, Text, LargeBinary, DateTime
+from sqlalchemy.sql import func
+from app.database import Base
 
 class SpillRecord(Base):
     __tablename__ = "spill_records"
 
-    id = Column(String, primary_key=True, index=True)          # e.g. "OS-2024-001"
+    id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    region = Column(String, nullable=True, index=True)          # kept for admin's own records
-    spill_date = Column(Date, nullable=False, index=True)
-    severity = Column(String, nullable=False, index=True)        # critical / high / medium / low
+    region = Column(String, nullable=True)
+    spill_date = Column(Date, nullable=True)
+    severity = Column(String, nullable=True)
     source = Column(String, nullable=True)
     vessel = Column(String, nullable=True)
     oil_type = Column(String, nullable=True)
     status = Column(String, nullable=True)
     area_km2 = Column(Float, nullable=True)
-
-    geometry_geojson = Column(Text, nullable=False)              # GeoJSON geometry as text
-    shapefile_name = Column(String, nullable=True)               # original uploaded filename
-    stored_zip_url = Column(String, nullable=True)                # Vercel Blob URL for the original zip
-
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    geometry_geojson = Column(Text, nullable=True)   # GeoJSON string
+    shapefile_name = Column(String, nullable=True)   # original filename
+    stored_zip_url = Column(String, nullable=True)   # kept for compatibility, but not used
+    zip_data = Column(LargeBinary, nullable=True)    # NEW: stores the raw ZIP bytes
+    created_at = Column(DateTime, server_default=func.now())
